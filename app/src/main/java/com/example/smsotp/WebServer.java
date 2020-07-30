@@ -1,18 +1,13 @@
 package com.example.smsotp;
 
-import android.util.Log;
-
-import java.io.IOException;
 import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD;
 
 public class WebServer extends NanoHTTPD {
 
-    public WebServer() throws IOException {
+    public WebServer() {
         super(8080);
-        start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
-        Log.d("WEB-SERVER", "\nRunning! Point your browsers to http://localhost:8080/ \n");
     }
 
     @Override

@@ -1,12 +1,15 @@
 package com.example.smsotp;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -14,12 +17,9 @@ import androidx.core.app.ActivityCompat;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
-import java.io.IOException;
-
 public class MainActivity extends AppCompatActivity {
 
-    private WebServer webServer;
-
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,13 +30,9 @@ public class MainActivity extends AppCompatActivity {
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show());
-        Log.e("DEBUG", "onCreate was called!");
 
-        try {
-            webServer = new WebServer();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Intent intent = new Intent(this, SmsOtpService.class);
+        startForegroundService(intent);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_DENIED) {
             requestPermissions(new String[]{Manifest.permission.SEND_SMS}, 10);
@@ -66,21 +62,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        Log.e("DEBUG", "onStart was called!");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Log.e("DEBUG", "onStop was called!");
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (webServer != null) webServer.stop();
         Log.e("DEBUG", "onDestroy was called!");
     }
 }
