@@ -1,25 +1,26 @@
 package com.example.smsotp;
 
-import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Process;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import androidx.annotation.RequiresApi;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
-public class MainActivity extends AppCompatActivity {
+import static android.Manifest.permission.SEND_SMS;
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+public class MainActivity extends AppCompatActivity {
+    static final String TAG = "MAIN_ACTIVITY";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,10 +33,25 @@ public class MainActivity extends AppCompatActivity {
                 .setAction("Action", null).show());
 
         Intent intent = new Intent(this, SmsOtpService.class);
-        startForegroundService(intent);
+        startService(intent);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_DENIED) {
-            requestPermissions(new String[]{Manifest.permission.SEND_SMS}, 10);
+        // Required for Marshmallow (API 23) and greater
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(SEND_SMS) == PackageManager.PERMISSION_DENIED)
+                requestPermissions(new String[]{SEND_SMS}, 10);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == 10) {// If request is cancelled, the result arrays are empty.
+            for (int i = 0; i < permissions.length; i++) {
+                if (permissions[i].equals(SEND_SMS) && grantResults[i] == PackageManager.PERMISSION_DENIED) {
+                    Log.d(TAG, "Permission " + permissions[i] + " denied!");
+                    // If user denies permission, we kill the app including the service
+                    Process.killProcess(Process.myPid());
+                }
+            }
         }
     }
 
@@ -64,6 +80,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.e("DEBUG", "onDestroy was called!");
+        Log.d(TAG, "onDestroy was called!");
     }
 }

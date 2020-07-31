@@ -56,13 +56,14 @@ public class SmsOtpService extends Service {
     }
 
     private void createNotification() {
+        // Required for Oreo (API 26) and greater
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel serviceChannel = new NotificationChannel(
+            NotificationChannel channel = new NotificationChannel(
                     CHANNEL_ID, "Foreground Service Channel",
                     NotificationManager.IMPORTANCE_DEFAULT
             );
             NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(serviceChannel);
+            manager.createNotificationChannel(channel);
         }
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
@@ -72,7 +73,7 @@ public class SmsOtpService extends Service {
                 new NotificationCompat.Builder(this, CHANNEL_ID)
                         .setContentTitle(getText(R.string.service_notifi_title))
                         .setContentText(getText(R.string.service_notifi_msg))
-                        .setSmallIcon(R.drawable.ic_launcher_foreground)
+//                        .setSmallIcon(R.drawable.ic_launcher_foreground)
                         .setContentIntent(pi)
                         .build();
 
