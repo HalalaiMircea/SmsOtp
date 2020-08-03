@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == 10) {// If request is cancelled, the result arrays are empty.
             for (int i = 0; i < permissions.length; i++) {
                 if (permissions[i].equals(SEND_SMS) && grantResults[i] == PackageManager.PERMISSION_DENIED) {
-                    Log.d(TAG, "Permission " + permissions[i] + " denied!");
+                    Log.d(TAG, "Permission " + permissions[i] + " denied by user!");
                     // If user denies permission, we kill the app including the service
                     Process.killProcess(Process.myPid());
                 }

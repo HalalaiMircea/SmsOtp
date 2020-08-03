@@ -34,19 +34,14 @@ public class SmsOtpService extends Service {
         createNotification();
 
         try {
+            webServer.setContext(this);
             webServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Log.d(TAG, "\nRunning! Point your browsers to http://localhost:8080/ \n");
+        Log.d(TAG, "Running! Point your browsers to http://localhost:8080/");
 
         return super.onStartCommand(intent, flags, startId);
-    }
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
     }
 
     @Override
@@ -78,5 +73,11 @@ public class SmsOtpService extends Service {
                         .build();
 
         startForeground(1, notification);
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 }
