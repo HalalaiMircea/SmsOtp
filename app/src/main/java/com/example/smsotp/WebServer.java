@@ -9,9 +9,12 @@ import android.content.IntentFilter;
 import android.telephony.SmsManager;
 import android.util.Log;
 
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import fi.iki.elonen.NanoHTTPD;
 
@@ -53,8 +56,8 @@ public class WebServer extends NanoHTTPD {
                     "Only POST is allowed!");
 
         if (params.containsKey("phone") && params.containsKey("message")) {
-            response = newFixedLengthResponse(Response.Status.OK, MIME_TYPES.get("JSON"),
-                    sendSms(params.get("phone"), params.get("message")) + "\n" + params);
+            response = newFixedLengthResponse(Response.Status.OK, mimeTypes().get("json"),
+                    sendSms(params).toString());
         } else
             response = newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT,
                     "Request query missing phone or message parameters!\n" + params.toString());
@@ -66,13 +69,13 @@ public class WebServer extends NanoHTTPD {
      * Sends intent-based SMS, meaning when the android system broadcasts the sentIntent
      * and deliveryIntent our app detects these broadcasts and does something for each case
      *
-     * @param phoneNo Recipient's phone number
-     * @param msg     Message to be sent
+     * @param params - request parameters
+     * @return JSONObject made from request parameters and status
      */
-    private String sendSms(String phoneNo, String msg) {
+    private JSONObject sendSms(Map<String, String> params) {
         /* We add the current thread's id to the action,
          so other receivers on different threads don't pick up our broadcast */
-        final String SENT = this.getClass().getPackage().getName() + ".SMS_SENT"
+        final String SENT = Objects.requireNonNull(getClass().getPackage()).getName() + ".SMS_SENT"
                 + Thread.currentThread().getId();
 
         PendingIntent sentPI = PendingIntent.getBroadcast(context, 0, new Intent(SENT), 0);
@@ -86,11 +89,11 @@ public class WebServer extends NanoHTTPD {
         };
         context.registerReceiver(sentReceiver, new IntentFilter(SENT));
 
-        String returnString = null;
+        String resultStatus;
         // It may throw exception if our app doesn't have SEND_SMS permission
         try {
             SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(phoneNo, null, msg, sentPI, null);
+            smsManager.sendTextMessage(params.get("phone"), null, params.get("message"), sentPI, null);
             // We check every 200ms if onReceive was executed
             // Yes, that's what I came up with...
             while (resultCode[0] == null) {
@@ -98,34 +101,35 @@ public class WebServer extends NanoHTTPD {
             }
             switch (resultCode[0]) {
                 case Activity.RESULT_OK:
-                    returnString = "SMS sent";
+                    resultStatus = "SMS sent";
                     break;
                 case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-                    returnString = "Generic failure";
+                    resultStatus = "Generic failure";
                     break;
                 case SmsManager.RESULT_ERROR_NO_SERVICE:
-                    returnString = "No service";
+                    resultStatus = "No service";
                     break;
                 case SmsManager.RESULT_ERROR_NULL_PDU:
-                    returnString = "Null PDU";
+                    resultStatus = "Null PDU";
                     break;
                 case SmsManager.RESULT_ERROR_RADIO_OFF:
-                    returnString = "Radio off";
+                    resultStatus = "Radio off";
                     break;
                 case 0:
-                    returnString = "NULL Result Code!";
+                    resultStatus = "NULL Result Code!";
                     break;
                 default:
-                    returnString = "IDK MAN, default switch";
+                    resultStatus = "IDK MAN, default switch";
             }
-            Log.d("sent SMS Recv", "Code: " + resultCode[0] + "\nMsg: " + returnString);
-        } catch (Exception ex) {
-            // If an exception happened, we assign the return string the message
+            Log.d(TAG, "Code: " + resultCode[0] + "\nMsg: " + resultStatus);
+        } catch (Exception ex) {// If an exception happened, we assign the message
             ex.printStackTrace();
-            returnString = ex.getMessage();
+            resultStatus = ex.getMessage();
         }
 
         context.unregisterReceiver(sentReceiver);   // We clean up
-        return returnString;
+
+        params.put("status", resultStatus);
+        return new JSONObject(params);
     }
 }
