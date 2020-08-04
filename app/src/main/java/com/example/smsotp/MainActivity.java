@@ -32,13 +32,17 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show());
 
-        Intent intent = new Intent(this, SmsOtpService.class);
-        startService(intent);
-
+        boolean canStart = true;
         // Required for Marshmallow (API 23) and greater
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(SEND_SMS) == PackageManager.PERMISSION_DENIED)
+            if (checkSelfPermission(SEND_SMS) == PackageManager.PERMISSION_DENIED) {
+                canStart = false;
                 requestPermissions(new String[]{SEND_SMS}, 10);
+            }
+        }
+        if (canStart) {
+            Intent intent = new Intent(this, SmsOtpService.class);
+            startService(intent);
         }
     }
 
@@ -46,10 +50,13 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 10) {// If request is cancelled, the result arrays are empty.
             for (int i = 0; i < permissions.length; i++) {
+                // If user denies permission, we kill the app including the service
                 if (permissions[i].equals(SEND_SMS) && grantResults[i] == PackageManager.PERMISSION_DENIED) {
                     Log.d(TAG, "Permission " + permissions[i] + " denied by user!");
-                    // If user denies permission, we kill the app including the service
                     Process.killProcess(Process.myPid());
+                } else {// if user allows, we start the service
+                    Intent intent = new Intent(this, SmsOtpService.class);
+                    startService(intent);
                 }
             }
         }
