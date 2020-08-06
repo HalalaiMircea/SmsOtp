@@ -2,6 +2,7 @@ package com.example.smsotp;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,8 +30,8 @@ public class FirstFragment extends Fragment {
 
         Button firstButton = view.findViewById(R.id.button_first);
         firstButton.setOnClickListener(v -> {
+            new Thread(() -> Log.d("TEST", "HELLO " + AppDatabase.getInstance(context).userDao().getAll()))
+                    .start();
         });
     }
-
-
 }

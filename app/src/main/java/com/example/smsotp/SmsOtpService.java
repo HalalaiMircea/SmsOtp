@@ -20,33 +20,39 @@ import fi.iki.elonen.NanoHTTPD;
 public class SmsOtpService extends Service {
     private static final String TAG = "SMSOTP_SERVICE";
     private static final String CHANNEL_ID = "ForegroundServiceChannel";
+    private boolean isRunning;
     private WebServer webServer;
 
     @Override
     public void onCreate() {
-        webServer = new WebServer();
+        isRunning = false;
+        webServer = new WebServer(this);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "Service started!");
-
-        createNotification();
-
-        try {
-            webServer.setContext(this);
-            webServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Log.d(TAG, "Running! Point your browsers to http://localhost:8080/");
+        if (!isRunning) {
+            isRunning = true;
+            Log.d(TAG, "Service started!");
+            createNotification();
+            AppDatabase.getInstance(this); // Opening the database
+            try {
+                webServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
+                Log.d(TAG, "Running! Point your browsers to http://localhost:8080/");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else
+            Log.w(TAG, "onStartCommand called more than once in the same service session!");
 
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onDestroy() {
+        isRunning = false;
         webServer.stop();
+        AppDatabase.closeInstance();
         Log.d(TAG, "Service stopped!");
     }
 

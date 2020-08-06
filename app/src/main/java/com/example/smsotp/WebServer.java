@@ -22,13 +22,10 @@ public class WebServer extends NanoHTTPD {
     static final String TAG = "WEB_SERVER";
     private Context context;
 
-    public WebServer() {
+    public WebServer(Context context) {
         super(8080);
-        mimeTypes().put("json", "application/json");
-    }
-
-    public void setContext(Context context) {
         this.context = context;
+        mimeTypes().put("json", "application/json");
     }
 
     @Override
@@ -57,7 +54,7 @@ public class WebServer extends NanoHTTPD {
 
         if (params.containsKey("phone") && params.containsKey("message")) {
             response = newFixedLengthResponse(Response.Status.OK, mimeTypes().get("json"),
-                    sendSms(params).toString());
+                    sendSms(params));
         } else
             response = newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT,
                     "Request query missing phone or message parameters!\n" + params.toString());
@@ -70,9 +67,9 @@ public class WebServer extends NanoHTTPD {
      * and deliveryIntent our app detects these broadcasts and does something for each case
      *
      * @param params - request parameters
-     * @return JSONObject made from request parameters and status
+     * @return string made from JSONObject with request parameters and status
      */
-    private JSONObject sendSms(Map<String, String> params) {
+    private String sendSms(Map<String, String> params) {
         /* We add the current thread's id to the action,
          so other receivers on different threads don't pick up our broadcast */
         final String SENT = Objects.requireNonNull(getClass().getPackage()).getName() + ".SMS_SENT"
@@ -130,6 +127,6 @@ public class WebServer extends NanoHTTPD {
         context.unregisterReceiver(sentReceiver);   // We clean up
 
         params.put("status", resultStatus);
-        return new JSONObject(params);
+        return new JSONObject(params).toString();
     }
 }

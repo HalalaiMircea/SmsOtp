@@ -88,5 +88,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy was called!");
+        if (isFinishing()) Log.d(TAG, "Activity closed!");
     }
 }
