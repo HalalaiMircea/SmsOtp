@@ -48,6 +48,8 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     }
 
+    // On emulators with older Android versions SQLite logs Errors when DB isn't properly closed
+    @Deprecated
     public static synchronized void closeInstance() {
         if (instance != null) {
             instance.close();

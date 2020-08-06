@@ -21,10 +21,12 @@ import fi.iki.elonen.NanoHTTPD;
 public class WebServer extends NanoHTTPD {
     static final String TAG = "WEB_SERVER";
     private Context context;
+    private AppDatabase database;
 
-    public WebServer(Context context) {
+    public WebServer(Context context, AppDatabase database) {
         super(8080);
         this.context = context;
+        this.database = database;
         mimeTypes().put("json", "application/json");
     }
 
@@ -45,13 +47,23 @@ public class WebServer extends NanoHTTPD {
 
         Map<String, String> params = session.getParms();
 
-        //TODO Authenticate users with database
+        if (method != Method.POST) {
+            return newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED, MIME_PLAINTEXT,
+                    "Only POST requests are allowed!");
+        }
+
+        // We check if the request misses any credential
+        if (!params.containsKey("username") || !params.containsKey("password"))
+            return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_PLAINTEXT,
+                    "Missing username or password parameters!");
+
+        // If returned password string is null, SQL query was empty
+        String password = database.userDao().getPasswordByUsername(params.get("username"));
+        if (password == null || !password.equals(params.get("password")))
+            return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_PLAINTEXT,
+                    "Incorrect username and/or password!");
 
         Response response;
-        if (method != Method.POST)
-            return newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED, MIME_PLAINTEXT,
-                    "Only POST is allowed!");
-
         if (params.containsKey("phone") && params.containsKey("message")) {
             response = newFixedLengthResponse(Response.Status.OK, mimeTypes().get("json"),
                     sendSms(params));

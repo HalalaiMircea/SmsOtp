@@ -18,7 +18,7 @@ import java.io.IOException;
 import fi.iki.elonen.NanoHTTPD;
 
 public class SmsOtpService extends Service {
-    private static final String TAG = "SMSOTP_SERVICE";
+    private static final String TAG = "SMSOTP_Service";
     private static final String CHANNEL_ID = "ForegroundServiceChannel";
     private boolean isRunning;
     private WebServer webServer;
@@ -26,7 +26,7 @@ public class SmsOtpService extends Service {
     @Override
     public void onCreate() {
         isRunning = false;
-        webServer = new WebServer(this);
+        webServer = new WebServer(this, AppDatabase.getInstance(this));
     }
 
     @Override
@@ -35,7 +35,6 @@ public class SmsOtpService extends Service {
             isRunning = true;
             Log.d(TAG, "Service started!");
             createNotification();
-            AppDatabase.getInstance(this); // Opening the database
             try {
                 webServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
                 Log.d(TAG, "Running! Point your browsers to http://localhost:8080/");
@@ -52,7 +51,6 @@ public class SmsOtpService extends Service {
     public void onDestroy() {
         isRunning = false;
         webServer.stop();
-        AppDatabase.closeInstance();
         Log.d(TAG, "Service stopped!");
     }
 
