@@ -20,14 +20,20 @@ import fi.iki.elonen.NanoHTTPD;
 
 public class WebServer extends NanoHTTPD {
     static final String TAG = "WEB_SERVER";
+    public static int port;
     private Context context;
     private AppDatabase database;
 
-    public WebServer(Context context, AppDatabase database) {
-        super(8080);
+    public WebServer(Context context, AppDatabase database, int port) {
+        super(port);
+        WebServer.port = port;
         this.context = context;
         this.database = database;
         mimeTypes().put("json", "application/json");
+    }
+
+    public WebServer(Context context, AppDatabase database) {
+        this(context, database, 8080);
     }
 
     @Override
