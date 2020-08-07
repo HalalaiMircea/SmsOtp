@@ -11,5 +11,8 @@
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <string name="service_desc">Background service for embedded web server to listen to incoming request and for executing specified commands</string>
     <string name="service_notifi_title">SMSOTP Service</string>
-    <string name="service_notifi_msg">Web Server running...</string>
+    <string name="service_notifi_msg">Web Server running…</string>
+    <string name="status_tabitem">Status</string>
+    <string name="users_tabitem">Users</string>
+    <string name="statistics_tabitem">Statistics</string>
 </resources>
