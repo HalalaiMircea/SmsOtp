@@ -1,20 +1,16 @@
 <resources>
     <string name="app_name">SmsOtp</string>
     <string name="action_settings">Settings</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
 
-    <string name="hello_first_fragment">Hello first fragment</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <string name="service_desc">Background service for embedded web server to listen to incoming request and for executing specified commands</string>
     <string name="service_notifi_title">SMSOTP Service</string>
     <string name="service_notifi_msg">Web Server running…</string>
     <string name="status_tabitem">Status</string>
     <string name="users_tabitem">Users</string>
     <string name="statistics_tabitem">Statistics</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="db_icon_desc">Database Icon</string>
+    <string name="server_port_icon_desc">Server port icon</string>
+    <string name="wifi_ip_icon_desc">Wifi IP icon</string>
+    <string name="server_switch_text">Enable Web server</string>
 </resources>

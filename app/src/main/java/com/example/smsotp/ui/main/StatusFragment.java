@@ -1,18 +1,23 @@
 package com.example.smsotp.ui.main;
 
-import android.content.Context;
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Switch;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.smsotp.AppDatabase;
 import com.example.smsotp.R;
+import com.example.smsotp.SmsOtpService;
 import com.example.smsotp.WebServer;
 
 import java.math.BigInteger;
@@ -69,21 +74,32 @@ public class StatusFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_status, container, false);
-        TextView infoText = view.findViewById(R.id.infoText);
-
-        String info = wifiIpAddress(requireContext()) + "\n"
-                + WebServer.port + "\n"
-                + AppDatabase.getInstance(getContext()).getOpenHelper().getDatabaseName();
-        infoText.setText(info);
-        return view;
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_status, container, false);
     }
 
-    private String wifiIpAddress(Context context) {
-        WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        TextView ipTextView = view.findViewById(R.id.ipTextView);
+        TextView dbTextView = view.findViewById(R.id.dbTextView);
+        TextView portTextView = view.findViewById(R.id.portTextView);
+        @SuppressLint("UseSwitchCompatOrMaterialCode") Switch serverSwitch = view.findViewById(R.id.serverSwitch);
+
+        serverSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                requireContext().startService(new Intent(getContext(), SmsOtpService.class));
+            } else {
+                requireContext().stopService(new Intent(getContext(), SmsOtpService.class));
+            }
+        });
+
+        ipTextView.setText(getWifiIPAddress());
+        dbTextView.setText(AppDatabase.getInstance(getContext()).getOpenHelper().getDatabaseName());
+        portTextView.setText(String.valueOf(WebServer.port));
+    }
+
+    private String getWifiIPAddress() {
+        WifiManager wifiManager = (WifiManager) requireContext().getApplicationContext().getSystemService(WIFI_SERVICE);
         int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
 
         // Convert little-endian to big-endianif needed

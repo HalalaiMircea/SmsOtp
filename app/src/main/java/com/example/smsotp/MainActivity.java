@@ -1,6 +1,5 @@
 package com.example.smsotp;
 
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -41,10 +40,10 @@ public class MainActivity extends AppCompatActivity {
                 requestPermissions(new String[]{SEND_SMS}, 10);
             }
         }
-        if (canStart) {
-            Intent intent = new Intent(this, SmsOtpService.class);
-            startService(intent);
-        }
+//        if (canStart) {
+//            Intent intent = new Intent(this, SmsOtpService.class);
+//            startService(intent);
+//        }
     }
 
     private void setupTabLayout() {
@@ -64,8 +63,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "Permission " + permissions[i] + " denied by user!");
                     Process.killProcess(Process.myPid());
                 } else {// if user allows, we start the service
-                    Intent intent = new Intent(this, SmsOtpService.class);
-                    startService(intent);
+                    /*Intent intent = new Intent(this, SmsOtpService.class);
+                    startService(intent);*/
                 }
             }
         }

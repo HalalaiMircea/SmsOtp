@@ -37,7 +37,7 @@ public class SmsOtpService extends Service {
             createNotification();
             try {
                 webServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
-                Log.d(TAG, "Running! Point your browsers to http://localhost:8080/");
+                Log.d(TAG, "Server running! Point your browsers to http://localhost:8080/");
             } catch (IOException e) {
                 e.printStackTrace();
             }
