@@ -72,7 +72,7 @@ public class SmsOtpService extends Service {
                 new NotificationCompat.Builder(this, CHANNEL_ID)
                         .setContentTitle(getText(R.string.service_notifi_title))
                         .setContentText(getText(R.string.service_notifi_msg))
-//                        .setSmallIcon(R.drawable.ic_launcher_foreground)
+                        .setSmallIcon(R.drawable.ic_baseline_web_24)
                         .setContentIntent(pi)
                         .build();
 
