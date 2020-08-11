@@ -32,8 +32,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter
         mContext = context;
         fab = context.findViewById(R.id.fab);
         fragments = new Fragment[]{StatusFragment.newInstance(),
-                UserFragment.newInstance(1),
-                PlaceholderFragment.newInstance(3)};
+                UserFragment.newInstance(1)};
     }
 
     @NonNull
