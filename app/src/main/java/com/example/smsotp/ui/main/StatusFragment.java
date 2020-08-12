@@ -1,13 +1,10 @@
 package com.example.smsotp.ui.main;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Switch;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,6 +14,7 @@ import com.example.smsotp.AppDatabase;
 import com.example.smsotp.R;
 import com.example.smsotp.SmsOtpService;
 import com.example.smsotp.WebServer;
+import com.example.smsotp.databinding.FragmentStatusBinding;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -31,42 +29,22 @@ import static android.content.Context.WIFI_SERVICE;
  * create an instance of this fragment.
  */
 public class StatusFragment extends Fragment {
-
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
     private static final String TAG = "SMSOTP_StatusFragment";
+    private FragmentStatusBinding binding;
 
     public StatusFragment() {
-        // Required public no-args constructor
         super(R.layout.fragment_status);
     }
 
     public static StatusFragment newInstance() {
-        StatusFragment fragment = new StatusFragment();
-//        Bundle args = new Bundle();
-//        args.putString(ARG_PARAM1, param1);
-//        args.putString(ARG_PARAM2, param2);
-//        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-//        if (getArguments() != null) {
-//            mParam1 = getArguments().getString(ARG_PARAM1);
-//            mParam2 = getArguments().getString(ARG_PARAM2);
-//        }
+        return new StatusFragment();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        TextView ipTextView = view.findViewById(R.id.ipTextView);
-        TextView dbTextView = view.findViewById(R.id.dbTextView);
-        TextView portTextView = view.findViewById(R.id.portTextView);
-        @SuppressLint("UseSwitchCompatOrMaterialCode") Switch serverSwitch = view.findViewById(R.id.serverSwitch);
+        binding = FragmentStatusBinding.bind(view);
 
-        serverSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        binding.serverSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 requireContext().startService(new Intent(getContext(), SmsOtpService.class));
             } else {
@@ -74,16 +52,17 @@ public class StatusFragment extends Fragment {
             }
         });
 
-        ipTextView.setText(getWifiIPAddress());
-        dbTextView.setText(AppDatabase.getInstance(getContext()).getOpenHelper().getDatabaseName());
-        portTextView.setText(String.valueOf(WebServer.port));
+        binding.ipTextView.setText(getWifiIPAddress());
+        binding.dbTextView.setText(AppDatabase.getInstance(getContext()).getOpenHelper().getDatabaseName());
+        binding.portTextView.setText(String.valueOf(WebServer.port));
     }
 
     private String getWifiIPAddress() {
-        WifiManager wifiManager = (WifiManager) requireContext().getApplicationContext().getSystemService(WIFI_SERVICE);
+        WifiManager wifiManager =
+                (WifiManager) requireContext().getApplicationContext().getSystemService(WIFI_SERVICE);
         int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
 
-        // Convert little-endian to big-endianif needed
+        // Convert little-endian to big-endian if needed
         if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
             ipAddress = Integer.reverseBytes(ipAddress);
         }

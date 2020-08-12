@@ -1,8 +1,9 @@
 package com.example.smsotp.ui.main;
 
+import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,14 +12,14 @@ import androidx.fragment.app.Fragment;
 
 import com.example.smsotp.AppDatabase;
 import com.example.smsotp.R;
+import com.example.smsotp.databinding.FragmentAddUserBinding;
 import com.example.smsotp.entity.User;
-import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.Objects;
 
 public class AddUserFragment extends Fragment {
-    private TextInputLayout userField;
-    private TextInputLayout passField;
+    private static final String TAG = "AddUserFragment";
+    private FragmentAddUserBinding binding;
     private AppCompatActivity activity;
 
     public AddUserFragment() {
@@ -27,44 +28,53 @@ public class AddUserFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        binding = FragmentAddUserBinding.bind(view);
         activity = (AppCompatActivity) requireActivity();
-        Button createButton = view.findViewById(R.id.createButton);
-        userField = view.findViewById(R.id.userField);
-        passField = view.findViewById(R.id.passField);
 
-        createButton.setOnClickListener(v -> {
-            if (validateInputs()) {
-                new Thread(() -> AppDatabase.getInstance(activity).userDao().insert(
-                        new User(Objects.requireNonNull(userField.getEditText()).getText().toString(),
-                                Objects.requireNonNull(passField.getEditText()).getText().toString()))
-                ).start();
-                activity.onBackPressed();
+        binding.createButton.setOnClickListener(v -> {
+            String userText =
+                    Objects.requireNonNull(binding.userField.getEditText()).getText().toString().trim();
+            String passText =
+                    Objects.requireNonNull(binding.passField.getEditText()).getText().toString().trim();
+            if (validateInputs(userText, passText)) {
+                new Thread(() -> {
+                    try {
+                        AppDatabase.getInstance(activity).userDao().insert(new User(userText, passText));
+                        activity.onBackPressed();
+                    } catch (SQLiteConstraintException ex) {
+                        Log.e(TAG, Objects.requireNonNull(ex.getMessage()));
+                        activity.runOnUiThread(() -> binding.userField.setError("Username already taken!"));
+                    }
+                }).start();
             }
         });
     }
 
-    private boolean validateInputs() {
-        String userText = Objects.requireNonNull(userField.getEditText()).getText().toString().trim();
-        String passText = Objects.requireNonNull(passField.getEditText()).getText().toString().trim();
+    @Override
+    public void onDestroyView() {
+        binding = null;
+        super.onDestroyView();
+    }
 
+    private boolean validateInputs(String userText, String passText) {
         boolean isUserValid = true;
         if (userText.isEmpty()) {
-            userField.setError("Field can't be empty");
+            binding.userField.setError("Field can't be empty");
             isUserValid = false;
         }
 
         boolean isPassValid = true;
         if (passText.isEmpty()) {
-            passField.setError("Field can't be empty");
+            binding.passField.setError("Field can't be empty");
             isPassValid = false;
         }
 
         if (!isUserValid || !isPassValid) return false;
 
-        userField.setError(null);
-        passField.setError(null);
-        userField.setErrorEnabled(false);
-        passField.setErrorEnabled(false);
+        binding.userField.setError(null);
+        binding.passField.setError(null);
+        binding.userField.setErrorEnabled(false);
+        binding.passField.setErrorEnabled(false);
         return true;
     }
 }

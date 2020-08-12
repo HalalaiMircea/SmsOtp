@@ -15,6 +15,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.example.smsotp.AppDatabase;
 import com.example.smsotp.R;
+import com.example.smsotp.databinding.FragmentMainBinding;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 
@@ -22,6 +23,7 @@ import static androidx.navigation.fragment.NavHostFragment.findNavController;
 
 public class MainFragment extends Fragment {
     private static final String TAG = "SMSOTP_MainFragment";
+    private FragmentMainBinding binding;
     private AppCompatActivity activity;
 
     public MainFragment() {
@@ -30,10 +32,11 @@ public class MainFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        binding = FragmentMainBinding.bind(view);
         activity = (AppCompatActivity) requireActivity();
+
         setupTabLayout(view);
-        FloatingActionButton fab = view.findViewById(R.id.fab);
-        fab.setOnClickListener(v -> {
+        binding.fab.setOnClickListener(v -> {
             findNavController(this).navigate(R.id.action_mainFragment_to_addUserFragment);
             new Thread(() -> Log.d(TAG, "All users:" + AppDatabase.getInstance(activity).userDao().getAll()))
                     .start();
@@ -42,13 +45,11 @@ public class MainFragment extends Fragment {
 
     private void setupTabLayout(View view) {
         // In Fragments we use ChildFragmentManager instead of SupportFragmentManager!!!!!!!!!!!!!!!
-        SectionsPagerAdapter adapter = new SectionsPagerAdapter(activity,
-                getChildFragmentManager());
-        ViewPager viewPager = view.findViewById(R.id.view_pager);
+        SectionsPagerAdapter adapter = new SectionsPagerAdapter(activity, getChildFragmentManager());
+        ViewPager viewPager = binding.viewPager;
         viewPager.setAdapter(adapter);
         viewPager.addOnPageChangeListener(adapter);
-        TabLayout tabs = view.findViewById(R.id.tabs);
-        tabs.setupWithViewPager(viewPager);
+        binding.tabs.setupWithViewPager(viewPager);
     }
 
     /**
@@ -70,8 +71,7 @@ public class MainFragment extends Fragment {
             super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
             mContext = context;
             fab = context.findViewById(R.id.fab);
-            fragments = new Fragment[]{StatusFragment.newInstance(),
-                    UserFragment.newInstance(1)};
+            fragments = new Fragment[]{StatusFragment.newInstance(), UserFragment.newInstance(1)};
         }
 
         @NonNull

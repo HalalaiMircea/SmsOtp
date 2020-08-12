@@ -22,7 +22,6 @@ public class User {
         this.password = password;
     }
 
-
     @NonNull
     @Override
     public String toString() {

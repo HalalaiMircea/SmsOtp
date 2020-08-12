@@ -16,27 +16,27 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/colorPrimary"
-            app:tabRippleColor="#1F000000"
+            app:tabRippleColor="#FFFFFF"
             app:tabSelectedTextColor="@color/design_default_color_background"
             app:tabTextColor="@color/colorAccent">
 
-            <com.google.android.material.tabs.TabItem
+            <!--<com.google.android.material.tabs.TabItem
                 android:id="@+id/statusTab"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/status_tabitem" />
+                android:text="@string/status_tabitem" />-->
 
-            <com.google.android.material.tabs.TabItem
+            <!--<com.google.android.material.tabs.TabItem
                 android:id="@+id/usersTab"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/users_tabitem" />
+                android:text="@string/users_tabitem" />-->
 
-            <com.google.android.material.tabs.TabItem
+            <!--<com.google.android.material.tabs.TabItem
                 android:id="@+id/statisticsTab"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/statistics_tabitem" />
+                android:text="@string/statistics_tabitem" />-->
         </com.google.android.material.tabs.TabLayout>
 
         <androidx.viewpager.widget.ViewPager
