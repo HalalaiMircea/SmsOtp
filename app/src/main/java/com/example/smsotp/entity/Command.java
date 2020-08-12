@@ -15,6 +15,7 @@ public class Command {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
+    //TODO index this foreign key reference
     public int userId;
 
     public String status;

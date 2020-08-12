@@ -35,7 +35,7 @@ public class MainFragment extends Fragment {
         binding = FragmentMainBinding.bind(view);
         activity = (AppCompatActivity) requireActivity();
 
-        setupTabLayout(view);
+        setupTabLayout();
         binding.fab.setOnClickListener(v -> {
             findNavController(this).navigate(R.id.action_mainFragment_to_addUserFragment);
             new Thread(() -> Log.d(TAG, "All users:" + AppDatabase.getInstance(activity).userDao().getAll()))
@@ -43,13 +43,19 @@ public class MainFragment extends Fragment {
         });
     }
 
-    private void setupTabLayout(View view) {
+    private void setupTabLayout() {
         // In Fragments we use ChildFragmentManager instead of SupportFragmentManager!!!!!!!!!!!!!!!
         SectionsPagerAdapter adapter = new SectionsPagerAdapter(activity, getChildFragmentManager());
         ViewPager viewPager = binding.viewPager;
         viewPager.setAdapter(adapter);
         viewPager.addOnPageChangeListener(adapter);
         binding.tabs.setupWithViewPager(viewPager);
+    }
+
+    @Override
+    public void onDestroyView() {
+        binding = null;
+        super.onDestroyView();
     }
 
     /**
@@ -71,7 +77,7 @@ public class MainFragment extends Fragment {
             super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
             mContext = context;
             fab = context.findViewById(R.id.fab);
-            fragments = new Fragment[]{StatusFragment.newInstance(), UserFragment.newInstance(1)};
+            fragments = new Fragment[]{StatusFragment.newInstance(), UserListFragment.newInstance(1)};
         }
 
         @NonNull

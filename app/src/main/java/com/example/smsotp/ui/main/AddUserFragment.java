@@ -50,12 +50,6 @@ public class AddUserFragment extends Fragment {
         });
     }
 
-    @Override
-    public void onDestroyView() {
-        binding = null;
-        super.onDestroyView();
-    }
-
     private boolean validateInputs(String userText, String passText) {
         boolean isUserValid = true;
         if (userText.isEmpty()) {
@@ -76,5 +70,11 @@ public class AddUserFragment extends Fragment {
         binding.userField.setErrorEnabled(false);
         binding.passField.setErrorEnabled(false);
         return true;
+    }
+
+    @Override
+    public void onDestroyView() {
+        binding = null;
+        super.onDestroyView();
     }
 }

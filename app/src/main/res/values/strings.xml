@@ -17,4 +17,6 @@
     <string name="password">Password</string>
     <string name="phone_number">Phone Number</string>
     <string name="create_user">Create User</string>
+    <string name="user_image">User image</string>
+    <string name="normal">Normal</string>
 </resources>

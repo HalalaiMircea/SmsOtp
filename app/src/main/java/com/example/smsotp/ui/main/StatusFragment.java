@@ -79,4 +79,10 @@ public class StatusFragment extends Fragment {
 
         return ipAddressString;
     }
+
+    @Override
+    public void onDestroyView() {
+        binding = null;
+        super.onDestroyView();
+    }
 }

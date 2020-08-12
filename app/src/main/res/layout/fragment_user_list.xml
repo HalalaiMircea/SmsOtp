@@ -6,8 +6,8 @@
     android:name="com.example.smsotp.ui.main.UserFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
+    android:clipToPadding="false"
+    android:padding="4dp"
     app:layoutManager="LinearLayoutManager"
-    tools:context=".ui.main.UserFragment"
-    tools:listitem="@layout/fragment_user" />
+    tools:context=".ui.main.UserListFragment"
+    tools:listitem="@layout/user_list_item" />

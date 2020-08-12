@@ -17,7 +17,7 @@ import com.example.smsotp.ui.main.dummy.DummyContent;
 /**
  * A fragment representing a list of Items.
  */
-public class UserFragment extends Fragment {
+public class UserListFragment extends Fragment {
 
     // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
@@ -28,13 +28,13 @@ public class UserFragment extends Fragment {
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public UserFragment() {
+    public UserListFragment() {
     }
 
     // TODO: Customize parameter initialization
     @SuppressWarnings("unused")
-    public static UserFragment newInstance(int columnCount) {
-        UserFragment fragment = new UserFragment();
+    public static UserListFragment newInstance(int columnCount) {
+        UserListFragment fragment = new UserListFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_COLUMN_COUNT, columnCount);
         fragment.setArguments(args);
@@ -64,7 +64,7 @@ public class UserFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new MyUserRecyclerViewAdapter(DummyContent.ITEMS));
+            recyclerView.setAdapter(new UserListAdapter(DummyContent.ITEMS));
         }
         return view;
     }
