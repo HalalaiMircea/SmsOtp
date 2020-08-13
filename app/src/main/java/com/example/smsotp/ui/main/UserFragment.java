@@ -17,7 +17,7 @@ public class UserFragment extends Fragment {
     public static final String ARG_ID = "userId";
     private FragmentUserBinding binding;
     private User mUser;
-    private Thread fetchDataThread;
+    private int userId;
 
     public UserFragment() {
     }
@@ -25,13 +25,8 @@ public class UserFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (getArguments() != null) {
-            int userId = getArguments().getInt(ARG_ID);
-            // BAD!!! VERY BAAAAAAAAAAAAD
-            fetchDataThread = new Thread(() -> mUser =
-                    AppDatabase.getInstance(getContext()).userDao().getById(userId));
-            fetchDataThread.start();
+            userId = getArguments().getInt(ARG_ID);
         }
     }
 
@@ -40,13 +35,15 @@ public class UserFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         binding = FragmentUserBinding.inflate(inflater, container, false);
-        try {
-            fetchDataThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        binding.idTextView.setText("Selected User ID: " + mUser.id);
-        binding.nameTextView.setText("Username: " + mUser.username);
+
+        Thread fetchDataThread = new Thread(() -> {
+            mUser = AppDatabase.getInstance(getContext()).userDao().getById(userId);
+            requireActivity().runOnUiThread(() -> {
+                binding.idTextView.setText("Selected User ID: " + mUser.id);
+                binding.nameTextView.setText("Username: " + mUser.username);
+            });
+        });
+        fetchDataThread.start();
 
         return binding.getRoot();
     }
