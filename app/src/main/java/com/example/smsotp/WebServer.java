@@ -20,7 +20,7 @@ import fi.iki.elonen.NanoHTTPD;
 
 public class WebServer extends NanoHTTPD {
     private static final String TAG = "SMSOTP_WebServer";
-    public static int port;
+    public static int port = 8080;
     private Context context;
     private AppDatabase database;
 

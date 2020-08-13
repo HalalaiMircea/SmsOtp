@@ -15,10 +15,24 @@
             app:destination="@id/addUserFragment"
             app:enterAnim="@anim/fragment_open_enter"
             app:popEnterAnim="@anim/fragment_close_enter" />
+        <action
+            android:id="@+id/action_mainFragment_to_userFragment"
+            app:destination="@id/userFragment"
+            app:enterAnim="@anim/fragment_open_enter"
+            app:popEnterAnim="@anim/fragment_close_enter" />
     </fragment>
     <fragment
         android:id="@+id/addUserFragment"
         android:name="com.example.smsotp.ui.main.AddUserFragment"
         android:label="fragment_add_user"
         tools:layout="@layout/fragment_add_user" />
+    <fragment
+        android:id="@+id/userFragment"
+        android:name="com.example.smsotp.ui.main.UserFragment"
+        android:label="fragment_user"
+        tools:layout="@layout/fragment_user">
+        <argument
+            android:name="userId"
+            app:argType="integer" />
+    </fragment>
 </navigation>
