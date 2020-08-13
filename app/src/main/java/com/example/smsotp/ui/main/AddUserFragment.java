@@ -74,7 +74,7 @@ public class AddUserFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        binding = null;
         super.onDestroyView();
+        binding = null;
     }
 }

@@ -6,20 +6,19 @@ import android.view.ViewGroup;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smsotp.databinding.UserListItemBinding;
-import com.example.smsotp.ui.main.dummy.DummyContent.DummyItem;
+import com.example.smsotp.entity.User;
 
 import java.util.List;
 
 /**
- * {@link RecyclerView.Adapter} that can display a {@link DummyItem}.
- * TODO: Replace the implementation with code for your data type.
+ * {@link RecyclerView.Adapter} that can display a {@link User}.
  */
 @SuppressWarnings("NullableProblems")
 public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHolder> {
 
-    private final List<DummyItem> mValues;
+    private final List<User> mValues;
 
-    public UserListAdapter(List<DummyItem> items) {
+    public UserListAdapter(List<User> items) {
         mValues = items;
     }
 
@@ -33,7 +32,7 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.ViewHo
     public void onBindViewHolder(final ViewHolder holder, int position) {
         // Here we set info for each item's views, like username, user type and others
 //        holder.binding.userName.setText(mValues.get(position).username);
-        holder.binding.userName.setText(mValues.get(position).content);
+        holder.binding.userName.setText(mValues.get(position).username);
     }
 
     @Override

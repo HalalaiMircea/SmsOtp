@@ -23,21 +23,12 @@ import java.nio.ByteOrder;
 
 import static android.content.Context.WIFI_SERVICE;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link StatusFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class StatusFragment extends Fragment {
     private static final String TAG = "SMSOTP_StatusFragment";
     private FragmentStatusBinding binding;
 
     public StatusFragment() {
         super(R.layout.fragment_status);
-    }
-
-    public static StatusFragment newInstance() {
-        return new StatusFragment();
     }
 
     @Override
@@ -82,7 +73,7 @@ public class StatusFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        binding = null;
         super.onDestroyView();
+        binding = null;
     }
 }

@@ -1,7 +1,6 @@
 package com.example.smsotp.ui.main;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -13,7 +12,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-import com.example.smsotp.AppDatabase;
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentMainBinding;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -36,11 +34,7 @@ public class MainFragment extends Fragment {
         activity = (AppCompatActivity) requireActivity();
 
         setupTabLayout();
-        binding.fab.setOnClickListener(v -> {
-            findNavController(this).navigate(R.id.action_mainFragment_to_addUserFragment);
-            new Thread(() -> Log.d(TAG, "All users:" + AppDatabase.getInstance(activity).userDao().getAll()))
-                    .start();
-        });
+        binding.fab.setOnClickListener(v -> findNavController(this).navigate(R.id.action_mainFragment_to_addUserFragment));
     }
 
     private void setupTabLayout() {
@@ -54,8 +48,8 @@ public class MainFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        binding = null;
         super.onDestroyView();
+        binding = null;
     }
 
     /**
@@ -77,7 +71,7 @@ public class MainFragment extends Fragment {
             super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
             mContext = context;
             fab = context.findViewById(R.id.fab);
-            fragments = new Fragment[]{StatusFragment.newInstance(), UserListFragment.newInstance(1)};
+            fragments = new Fragment[]{new StatusFragment(), new UserListFragment()};
         }
 
         @NonNull
