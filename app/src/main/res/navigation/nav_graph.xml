@@ -13,8 +13,8 @@
         <action
             android:id="@+id/action_mainFragment_to_addUserFragment"
             app:destination="@id/addUserFragment"
-            app:enterAnim="@anim/fragment_open_enter"
-            app:popEnterAnim="@anim/fragment_close_enter" />
+            app:enterAnim="@anim/fragment_slide_up"
+            app:popExitAnim="@anim/fragment_slide_down" />
         <action
             android:id="@+id/action_mainFragment_to_userFragment"
             app:destination="@id/userFragment"

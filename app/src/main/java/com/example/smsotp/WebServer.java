@@ -63,7 +63,7 @@ public class WebServer extends NanoHTTPD {
             return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_PLAINTEXT,
                     "Missing username or password parameters!");
 
-        // If returned password string is null, SQL query was empty
+        // If returned password string is null, username doesn't exist
         String password = database.userDao().getPasswordByUsername(params.get("username"));
         if (password == null || !password.equals(params.get("password")))
             return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_PLAINTEXT,
