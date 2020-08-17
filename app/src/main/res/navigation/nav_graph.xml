@@ -25,7 +25,11 @@
         android:id="@+id/addUserFragment"
         android:name="com.example.smsotp.ui.main.AddUserFragment"
         android:label="fragment_add_user"
-        tools:layout="@layout/fragment_add_user" />
+        tools:layout="@layout/fragment_add_user">
+        <argument
+            android:name="userId"
+            app:argType="integer" />
+    </fragment>
     <fragment
         android:id="@+id/userFragment"
         android:name="com.example.smsotp.ui.main.UserFragment"
@@ -34,5 +38,10 @@
         <argument
             android:name="userId"
             app:argType="integer" />
+        <action
+            android:id="@+id/action_editUser"
+            app:destination="@id/addUserFragment"
+            app:enterAnim="@anim/fragment_slide_up"
+            app:popExitAnim="@anim/fragment_slide_down" />
     </fragment>
 </navigation>

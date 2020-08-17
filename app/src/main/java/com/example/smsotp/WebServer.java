@@ -75,7 +75,7 @@ public class WebServer extends NanoHTTPD {
                     sendSms(params));
         } else
             response = newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT,
-                    "Request query missing phone or message parameters!\n" + params.toString());
+                    "Request query missing phone and/or message parameters!");
 
         return response;
     }
@@ -136,7 +136,7 @@ public class WebServer extends NanoHTTPD {
                 default:
                     resultStatus = "IDK MAN, default switch";
             }
-            Log.d(TAG, "Code: " + resultCode[0] + "\nMsg: " + resultStatus);
+            Log.d(TAG, "SMS_SENT Result Code: " + resultCode[0] + "\nMsg: " + resultStatus);
         } catch (Exception ex) {// If an exception happened, we assign the message
             ex.printStackTrace();
             resultStatus = ex.getMessage();

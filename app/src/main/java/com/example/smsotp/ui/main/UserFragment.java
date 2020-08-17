@@ -8,8 +8,10 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import com.example.smsotp.AppDatabase;
+import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentUserBinding;
 import com.example.smsotp.entity.User;
 
@@ -39,11 +41,17 @@ public class UserFragment extends Fragment {
         Thread fetchDataThread = new Thread(() -> {
             mUser = AppDatabase.getInstance(getContext()).userDao().getById(userId);
             requireActivity().runOnUiThread(() -> {
-                binding.idTextView.setText("Selected User ID: " + mUser.id);
+                binding.idTextView.setText("User ID: " + mUser.id);
                 binding.nameTextView.setText("Username: " + mUser.username);
             });
         });
         fetchDataThread.start();
+
+        binding.editFab.setOnClickListener(v -> {
+            Bundle passedArgs = new Bundle();
+            passedArgs.putInt(ARG_ID, userId);
+            Navigation.findNavController(v).navigate(R.id.action_editUser, passedArgs);
+        });
 
         return binding.getRoot();
     }

@@ -70,7 +70,7 @@ public class UserListFragment extends Fragment {
      * {@link RecyclerView.Adapter} that can display a {@link User}.
      */
     @SuppressWarnings("NullableProblems")
-    public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
+    public static class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
         private final List<User> userDataList;
 
@@ -96,7 +96,7 @@ public class UserListFragment extends Fragment {
             return userDataList.size();
         }
 
-        public class ViewHolder extends RecyclerView.ViewHolder {
+        public static class ViewHolder extends RecyclerView.ViewHolder {
             public UserListItemBinding binding;
             private int userId;
 

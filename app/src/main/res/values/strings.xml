@@ -19,4 +19,5 @@
     <string name="create_user">Create User</string>
     <string name="user_image">User image</string>
     <string name="normal">Normal</string>
+    <string name="save_changes">Save Changes</string>
 </resources>
