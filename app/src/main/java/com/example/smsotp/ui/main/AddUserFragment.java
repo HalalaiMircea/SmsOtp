@@ -21,7 +21,7 @@ public class AddUserFragment extends Fragment {
     private static final String TAG = "AddUserFragment";
     private FragmentAddUserBinding binding;
     private AppCompatActivity activity;
-    private User mUser;
+    private User user;
     private Integer userId;
 
     public AddUserFragment() {
@@ -46,11 +46,11 @@ public class AddUserFragment extends Fragment {
         // If we got here from action_editUser (if userId arg was provided)
         if (userId != null) {
             Thread fetchThread = new Thread(() -> {
-                mUser = AppDatabase.getInstance(getContext()).userDao().getById(userId);
+                user = AppDatabase.getInstance(getContext()).userDao().getById(userId);
                 requireActivity().runOnUiThread(() -> {
-                    binding.userField.getEditText().setText(mUser.username);
+                    binding.userField.getEditText().setText(user.username);
                     //TODO Should I put password there? IDK DOESN'T MATTER
-                    binding.passField.getEditText().setText(mUser.password);
+                    binding.passField.getEditText().setText(user.password);
                 });
             });
             fetchThread.start();
@@ -89,11 +89,11 @@ public class AddUserFragment extends Fragment {
                 Objects.requireNonNull(binding.passField.getEditText()).getText().toString().trim();
         if (validateInputs(userText, passText)) {
             // If input is valid, we update this user's data
-            mUser.username = userText;
-            mUser.password = passText;
+            user.username = userText;
+            user.password = passText;
             new Thread(() -> {
                 try {
-                    AppDatabase.getInstance(activity).userDao().update(mUser);
+                    AppDatabase.getInstance(activity).userDao().update(user);
                     activity.onBackPressed();
                 } catch (SQLiteConstraintException ex) {
                     Log.e(TAG, Objects.requireNonNull(ex.getMessage()));

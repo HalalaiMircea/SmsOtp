@@ -145,6 +145,7 @@ public class WebServer extends NanoHTTPD {
         context.unregisterReceiver(sentReceiver);   // We clean up
 
         params.put("status", resultStatus);
+        params.remove("password");
         return new JSONObject(params).toString();
     }
 }

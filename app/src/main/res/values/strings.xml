@@ -20,4 +20,6 @@
     <string name="user_image">User image</string>
     <string name="normal">Normal</string>
     <string name="save_changes">Save Changes</string>
+    <string name="delete_user">Delete User</string>
+    <string name="del_user_confirm">Delete this user?</string>
 </resources>
