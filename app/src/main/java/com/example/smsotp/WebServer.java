@@ -13,6 +13,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,27 +92,32 @@ public class WebServer extends NanoHTTPD {
         return response;
     }
 
+    /**
+     * Sends intent-based SMS, meaning when the android system broadcasts the sentIntent our app detects
+     * these broadcasts and does something for each case
+     *
+     * @param phones List of String phone numbers
+     * @param msg    Text message to send
+     * @return string made from JSONObject with request parameters and status
+     */
     private String sendManySms(List<String> phones, String msg) throws JSONException {
         String packageName = Objects.requireNonNull(getClass().getPackage()).getName()
                 + ".SMS_SENT" + Thread.currentThread().getId();
         final String[] SENT_IDS = new String[phones.size()];
-        for (int i = 0; i < phones.size(); i++) {
-            SENT_IDS[i] = packageName + phones.get(i);
-        }
+        for (int i = 0; i < phones.size(); i++) SENT_IDS[i] = packageName + i;
 
         PendingIntent[] sentPIs = new PendingIntent[phones.size()];
-        for (int i = 0; i < phones.size(); i++) {
+        for (int i = 0; i < phones.size(); i++)
             sentPIs[i] = PendingIntent.getBroadcast(context, 0, new Intent(SENT_IDS[i]), 0);
-        }
 
-        final Integer[] resultCodes = new Integer[phones.size()];
+        final SmsResultType[] resultTypes = new SmsResultType[phones.size()];
+        Arrays.fill(resultTypes, SmsResultType.ERROR_NONE);
         BroadcastReceiver sentReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 for (int i = 0; i < phones.size(); i++) {
-                    if (Objects.requireNonNull(intent.getAction()).equals(SENT_IDS[i])) {
-                        resultCodes[i] = getResultCode();
-                    }
+                    if (Objects.requireNonNull(intent.getAction()).equals(SENT_IDS[i]))
+                        resultTypes[i] = SmsResultType.lookup(getResultCode());
                 }
             }
         };
@@ -119,132 +125,64 @@ public class WebServer extends NanoHTTPD {
         for (String action : SENT_IDS) intentFilter.addAction(action);
         context.registerReceiver(sentReceiver, intentFilter);
 
-        String[] resultStatuses = new String[phones.size()];
         // It may throw exception if our app doesn't have SEND_SMS permission
         try {
             SmsManager smsManager = SmsManager.getDefault();
-            for (int i = 0; i < phones.size(); i++) {
+            for (int i = 0; i < phones.size(); i++)
                 smsManager.sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
-            }
-            // We check every 100ms if onReceive was executed
-            // Yes, that's what I came up with...
+
+            // Wait until we have all results
             for (int i = 0; i < phones.size(); i++) {
-                while (resultCodes[i] == null) {
+                while (resultTypes[i] == SmsResultType.ERROR_NONE)
                     Thread.sleep(100);
-                }
             }
-            for (int i = 0; i < phones.size(); i++) {
-                switch (resultCodes[i]) {
-                    case Activity.RESULT_OK:
-                        resultStatuses[i] = "SMS sent";
-                        break;
-                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-                        resultStatuses[i] = "Generic failure";
-                        break;
-                    case SmsManager.RESULT_ERROR_NO_SERVICE:
-                        resultStatuses[i] = "No service";
-                        break;
-                    case SmsManager.RESULT_ERROR_NULL_PDU:
-                        resultStatuses[i] = "Null PDU";
-                        break;
-                    case SmsManager.RESULT_ERROR_RADIO_OFF:
-                        resultStatuses[i] = "Radio off";
-                        break;
-                    case 0:
-                        resultStatuses[i] = "NULL Result Code!";
-                        break;
-                    default:
-                        resultStatuses[i] = "IDK MAN, default switch";
-                }
-            }
+
             StringBuilder stringBuilder = new StringBuilder("SMS_SENT Results: ");
-            for (int i = 0; i < phones.size(); i++) {
-                stringBuilder.append(resultCodes[i]).append(" ").append(resultStatuses[i]).append("\n");
-            }
+            for (int i = 0; i < phones.size(); i++)
+                stringBuilder.append(resultTypes[i].getCode()).append(" ").append(resultTypes[i]).append(
+                        "\n");
             Log.d(TAG, stringBuilder.toString());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        context.unregisterReceiver(sentReceiver);
+        context.unregisterReceiver(sentReceiver);   // Prevent memory leak
 
         JSONObject json = new JSONObject();
         json.put("message", msg);
         for (int i = 0; i < phones.size(); i++) {
             JSONObject phoneStatusPair = new JSONObject();
             phoneStatusPair.put("phone", phones.get(i));
-            phoneStatusPair.put("status", resultStatuses[i]);
+            phoneStatusPair.put("status", resultTypes[i]);
             json.accumulate("results", phoneStatusPair);
         }
 
         return json.toString();
     }
 
-    /**
-     * Sends intent-based SMS, meaning when the android system broadcasts the sentIntent
-     * and deliveryIntent our app detects these broadcasts and does something for each case
-     *
-     * @param params - request parameters
-     * @return string made from JSONObject with request parameters and status
-     */
-    private String sendSms(Map<String, String> params) {
-        /* We add the current thread's id to the action,
-         so other receivers on different threads don't pick up our broadcast */
-        String packageName = Objects.requireNonNull(getClass().getPackage()).getName();
-        final String SENT = packageName + ".SMS_SENT" + Thread.currentThread().getId();
+    private enum SmsResultType {
+        OK(Activity.RESULT_OK),
+        ERROR_GENERIC_FAILURE(SmsManager.RESULT_ERROR_GENERIC_FAILURE),
+        ERROR_NO_SERVICE(SmsManager.RESULT_ERROR_NO_SERVICE),
+        ERROR_NULL_PDU(SmsManager.RESULT_ERROR_NULL_PDU),
+        ERROR_RADIO_OFF(SmsManager.RESULT_ERROR_RADIO_OFF),
+        ERROR_NONE(0);
 
-        PendingIntent sentPI = PendingIntent.getBroadcast(context, 0, new Intent(SENT), 0);
+        private final int code;
 
-        final Integer[] resultCode = new Integer[1];
-        BroadcastReceiver sentReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                resultCode[0] = getResultCode();
-            }
-        };
-        context.registerReceiver(sentReceiver, new IntentFilter(SENT));
-
-        String resultStatus;
-        // It may throw exception if our app doesn't have SEND_SMS permission
-        try {
-            SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(params.get("phone"), null, params.get("message"), sentPI, null);
-            // We check every 200ms if onReceive was executed
-            // Yes, that's what I came up with...
-            while (resultCode[0] == null) {
-                Thread.sleep(200);
-            }
-            switch (resultCode[0]) {
-                case Activity.RESULT_OK:
-                    resultStatus = "SMS sent";
-                    break;
-                case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-                    resultStatus = "Generic failure";
-                    break;
-                case SmsManager.RESULT_ERROR_NO_SERVICE:
-                    resultStatus = "No service";
-                    break;
-                case SmsManager.RESULT_ERROR_NULL_PDU:
-                    resultStatus = "Null PDU";
-                    break;
-                case SmsManager.RESULT_ERROR_RADIO_OFF:
-                    resultStatus = "Radio off";
-                    break;
-                case 0:
-                    resultStatus = "NULL Result Code!";
-                    break;
-                default:
-                    resultStatus = "IDK MAN, default switch";
-            }
-            Log.d(TAG, "SMS_SENT Result Code: " + resultCode[0] + "\nMsg: " + resultStatus);
-        } catch (Exception ex) {// If an exception happened, we assign the message
-            ex.printStackTrace();
-            resultStatus = ex.getMessage();
+        SmsResultType(int code) {
+            this.code = code;
         }
 
-        context.unregisterReceiver(sentReceiver);   // We clean up
+        public static SmsResultType lookup(int code) {
+            for (SmsResultType type : values()) {
+                if (type.getCode() == code)
+                    return type;
+            }
+            return null;
+        }
 
-        params.put("status", resultStatus);
-        params.remove("password");
-        return new JSONObject(params).toString();
+        public int getCode() {
+            return code;
+        }
     }
 }
