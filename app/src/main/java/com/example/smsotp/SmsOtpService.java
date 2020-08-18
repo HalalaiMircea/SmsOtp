@@ -20,19 +20,16 @@ import fi.iki.elonen.NanoHTTPD;
 public class SmsOtpService extends Service {
     private static final String TAG = "SMSOTP_Service";
     private static final String CHANNEL_ID = "ForegroundServiceChannel";
-    private boolean isRunning;
     private WebServer webServer;
 
     @Override
     public void onCreate() {
-        isRunning = false;
         webServer = new WebServer(this, AppDatabase.getInstance(this));
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (!isRunning) {
-            isRunning = true;
+        if (!webServer.wasStarted()) {
             Log.d(TAG, "Service started!");
             createNotification();
             try {
@@ -49,7 +46,6 @@ public class SmsOtpService extends Service {
 
     @Override
     public void onDestroy() {
-        isRunning = false;
         webServer.stop();
         Log.d(TAG, "Service stopped!");
     }
