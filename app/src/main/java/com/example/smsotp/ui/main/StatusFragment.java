@@ -1,5 +1,6 @@
 package com.example.smsotp.ui.main;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -36,12 +37,15 @@ public class StatusFragment extends Fragment {
         binding = FragmentStatusBinding.bind(view);
 
         binding.serverSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            Context context = requireContext();
+            Intent serviceIntent = new Intent(context, SmsOtpService.class);
             if (isChecked) {
-                requireContext().startService(new Intent(getContext(), SmsOtpService.class));
+                context.startService(serviceIntent);
             } else {
-                requireContext().stopService(new Intent(getContext(), SmsOtpService.class));
+                context.stopService(serviceIntent);
             }
         });
+        binding.serverSwitch.setChecked(SmsOtpService.isRunning());
 
         binding.ipTextView.setText(getWifiIPAddress());
         binding.dbTextView.setText(AppDatabase.getInstance(getContext()).getOpenHelper().getDatabaseName());

@@ -7,14 +7,19 @@ import androidx.room.Query;
 
 import com.example.smsotp.entity.Command;
 
+import java.util.List;
+
 @Dao
 public interface CommandDao {
     @Insert
-    void insert(Command command);
+    long insert(Command command);
 
     @Delete
     void delete(Command command);
 
     @Query("DELETE FROM command")
     void deleteAll();
+
+    @Query("SELECT * FROM command")
+    List<Command> getAll();
 }

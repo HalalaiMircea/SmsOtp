@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "8289f297d75e8272884d7b88dc0475c8",
+    "identityHash": "fe17264a98766c2df688cf5b128cb189",
     "entities": [
       {
         "tableName": "User",
@@ -47,7 +47,7 @@
       },
       {
         "tableName": "Command",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` INTEGER NOT NULL, `status` TEXT, `paramsJson` TEXT, FOREIGN KEY(`userId`) REFERENCES `User`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` INTEGER NOT NULL, `jsonParams` TEXT, `executedDate` INTEGER NOT NULL, FOREIGN KEY(`userId`) REFERENCES `User`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -62,16 +62,16 @@
             "notNull": true
           },
           {
-            "fieldPath": "status",
-            "columnName": "status",
+            "fieldPath": "jsonParams",
+            "columnName": "jsonParams",
             "affinity": "TEXT",
             "notNull": false
           },
           {
-            "fieldPath": "paramsJson",
-            "columnName": "paramsJson",
-            "affinity": "TEXT",
-            "notNull": false
+            "fieldPath": "executedDate",
+            "columnName": "executedDate",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -80,7 +80,16 @@
           ],
           "autoGenerate": true
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_Command_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Command_userId` ON `${TABLE_NAME}` (`userId`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "User",
@@ -99,7 +108,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8289f297d75e8272884d7b88dc0475c8')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fe17264a98766c2df688cf5b128cb189')"
     ]
   }
 }

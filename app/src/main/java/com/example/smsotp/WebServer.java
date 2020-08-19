@@ -9,11 +9,14 @@ import android.content.IntentFilter;
 import android.telephony.SmsManager;
 import android.util.Log;
 
+import com.example.smsotp.entity.Command;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +26,7 @@ import fi.iki.elonen.NanoHTTPD;
 
 public class WebServer extends NanoHTTPD {
     private static final String TAG = "SMSOTP_WebServer";
+    private static final String MIME_JSON = "application/json";
     public static int port = 8080;
     private Context context;
     private AppDatabase database;
@@ -32,7 +36,6 @@ public class WebServer extends NanoHTTPD {
         WebServer.port = port;
         this.context = context;
         this.database = database;
-        mimeTypes().put("json", "application/json");
     }
 
     public WebServer(Context context, AppDatabase database) {
@@ -54,13 +57,15 @@ public class WebServer extends NanoHTTPD {
             }
         }
 
-        Map<String, List<String>> params = session.getParameters();
-
         if (method != Method.POST) {
             return newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED, MIME_PLAINTEXT,
                     "Only POST requests are allowed!");
         }
 
+        return handleRequest(session, session.getParameters());
+    }
+
+    private Response handleRequest(IHTTPSession session, Map<String, List<String>> params) {
         // We check if the request misses any credential
         if (!params.containsKey("username") || !params.containsKey("password"))
             return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_PLAINTEXT,
@@ -76,20 +81,37 @@ public class WebServer extends NanoHTTPD {
 
         Response response;
         if (params.containsKey("phones") && params.containsKey("message")) {
-            try {
-                //noinspection ConstantConditions
-                response = newFixedLengthResponse(Response.Status.OK, mimeTypes().get("json"),
-                        sendManySms(params.get("phones"), params.get("message").get(0)));
-            } catch (JSONException e) {
-                e.printStackTrace();
-                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
-                        "Could not convert params to JSON");
-            }
+            response = handleGoodRequest(params);
         } else
             response = newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT,
                     "Request query missing phones and/or message parameters!");
 
         return response;
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private Response handleGoodRequest(Map<String, List<String>> params) {
+        try {
+            JSONObject jsonParams = sendManySms(params.get("phones"), params.get("message").get(0));
+            int userId = database.userDao().getIdByUsername(params.get("username").get(0));
+            int commId = (int) database.commandDao().insert(new Command(userId, jsonParams.toString(),
+                    new Date()));
+
+//            for (Command comm : database.commandDao().getAll()) {
+//                Log.d(TAG, comm + "\n");
+//            }
+
+            JSONObject jsonResponse = new JSONObject();
+            jsonResponse.put("commandId", commId)
+                    .put("userId", userId)
+                    .put("message", jsonParams.getString("message"))
+                    .put("results", jsonParams.get("results"));
+            return newFixedLengthResponse(Response.Status.OK, MIME_JSON, jsonResponse.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
+                    "Could not convert params to JSON\n" + e.getMessage());
+        }
     }
 
     /**
@@ -98,9 +120,9 @@ public class WebServer extends NanoHTTPD {
      *
      * @param phones List of String phone numbers
      * @param msg    Text message to send
-     * @return string made from JSONObject with request parameters and status
+     * @return JSON parameters to insert into DB and append to response JSON
      */
-    private String sendManySms(List<String> phones, String msg) throws JSONException {
+    private JSONObject sendManySms(List<String> phones, String msg) throws JSONException {
         String packageName = Objects.requireNonNull(getClass().getPackage()).getName()
                 + ".SMS_SENT" + Thread.currentThread().getId();
         final String[] SENT_IDS = new String[phones.size()];
@@ -151,12 +173,12 @@ public class WebServer extends NanoHTTPD {
         json.put("message", msg);
         for (int i = 0; i < phones.size(); i++) {
             JSONObject phoneStatusPair = new JSONObject();
-            phoneStatusPair.put("phone", phones.get(i));
-            phoneStatusPair.put("status", resultTypes[i]);
+            phoneStatusPair.put("phone", phones.get(i))
+                    .put("status", resultTypes[i]);
             json.accumulate("results", phoneStatusPair);
         }
 
-        return json.toString();
+        return json;
     }
 
     private enum SmsResultType {

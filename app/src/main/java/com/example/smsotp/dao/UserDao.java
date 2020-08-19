@@ -21,8 +21,11 @@ public interface UserDao {
     @Delete
     void delete(User user);
 
-    @Query("SELECT * FROM User WHERE id = :id")
+    @Query("SELECT * FROM user WHERE id = :id")
     User getById(int id);
+
+    @Query("SELECT id FROM user WHERE username = :username")
+    int getIdByUsername(String username);
 
     @Query("SELECT password FROM user WHERE username = :username")
     String getPasswordByUsername(String username);

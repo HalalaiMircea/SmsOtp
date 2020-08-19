@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.TypeConverters;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.smsotp.dao.CommandDao;
@@ -15,6 +16,7 @@ import com.example.smsotp.entity.Command;
 import com.example.smsotp.entity.User;
 
 @Database(entities = {User.class, Command.class}, version = 1)
+@TypeConverters({TimestampConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
 
     private static final String TAG = "SMSOTP_DB";

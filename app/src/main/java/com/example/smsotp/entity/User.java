@@ -5,6 +5,8 @@ import androidx.room.Entity;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import java.util.Objects;
+
 @Entity(indices = @Index(value = {"username"}, unique = true))
 public class User {
 
@@ -18,8 +20,8 @@ public class User {
     public String password;
 
     public User(@NonNull String username, @NonNull String password) {
-        this.username = username;
-        this.password = password;
+        this.username = Objects.requireNonNull(username);
+        this.password = Objects.requireNonNull(password);
     }
 
     @NonNull
