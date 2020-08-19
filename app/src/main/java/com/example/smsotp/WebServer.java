@@ -15,7 +15,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -124,7 +123,7 @@ public class WebServer extends NanoHTTPD {
      */
     private JSONObject sendManySms(List<String> phones, String msg) throws JSONException {
         String packageName = Objects.requireNonNull(getClass().getPackage()).getName()
-                + ".SMS_SENT" + Thread.currentThread().getId();
+                + ".SMS_SENT" + Thread.currentThread().getId() + "#";
         final String[] SENT_IDS = new String[phones.size()];
         for (int i = 0; i < phones.size(); i++) SENT_IDS[i] = packageName + i;
 
@@ -133,14 +132,12 @@ public class WebServer extends NanoHTTPD {
             sentPIs[i] = PendingIntent.getBroadcast(context, 0, new Intent(SENT_IDS[i]), 0);
 
         final SmsResultType[] resultTypes = new SmsResultType[phones.size()];
-        Arrays.fill(resultTypes, SmsResultType.ERROR_NONE);
         BroadcastReceiver sentReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                for (int i = 0; i < phones.size(); i++) {
-                    if (Objects.requireNonNull(intent.getAction()).equals(SENT_IDS[i]))
-                        resultTypes[i] = SmsResultType.lookup(getResultCode());
-                }
+                String action = Objects.requireNonNull(intent.getAction());
+                int phoneIdx = Integer.parseInt(action.substring(action.lastIndexOf('#') + 1));
+                resultTypes[phoneIdx] = SmsResultType.lookup(getResultCode());
             }
         };
         IntentFilter intentFilter = new IntentFilter();
@@ -155,14 +152,14 @@ public class WebServer extends NanoHTTPD {
 
             // Wait until we have all results
             for (int i = 0; i < phones.size(); i++) {
-                while (resultTypes[i] == SmsResultType.ERROR_NONE)
+                while (resultTypes[i] == null)
                     Thread.sleep(100);
             }
 
             StringBuilder stringBuilder = new StringBuilder("SMS_SENT Results: ");
             for (int i = 0; i < phones.size(); i++)
-                stringBuilder.append(resultTypes[i].getCode()).append(" ").append(resultTypes[i]).append(
-                        "\n");
+                stringBuilder.append(resultTypes[i].getCode()).append(" ").append(resultTypes[i]).append('\n');
+
             Log.d(TAG, stringBuilder.toString());
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -181,13 +178,13 @@ public class WebServer extends NanoHTTPD {
         return json;
     }
 
+    @SuppressWarnings("unused")
     private enum SmsResultType {
         OK(Activity.RESULT_OK),
         ERROR_GENERIC_FAILURE(SmsManager.RESULT_ERROR_GENERIC_FAILURE),
         ERROR_NO_SERVICE(SmsManager.RESULT_ERROR_NO_SERVICE),
         ERROR_NULL_PDU(SmsManager.RESULT_ERROR_NULL_PDU),
-        ERROR_RADIO_OFF(SmsManager.RESULT_ERROR_RADIO_OFF),
-        ERROR_NONE(0);
+        ERROR_RADIO_OFF(SmsManager.RESULT_ERROR_RADIO_OFF);
 
         private final int code;
 
