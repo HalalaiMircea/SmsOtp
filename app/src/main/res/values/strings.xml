@@ -2,13 +2,12 @@
     <string name="app_name">SmsOtp</string>
     <string name="action_settings">Settings</string>
 
-    <string name="service_desc">Background service for embedded web server to listen to incoming request and for executing specified commands</string>
+    <string name="service_desc">Background service for web server which listens to incoming request and handles them</string>
     <string name="service_notifi_title">SMSOTP Service</string>
     <string name="service_notifi_msg">Web Server running…</string>
     <string name="status_tabitem">Status</string>
     <string name="users_tabitem">Users</string>
     <string name="statistics_tabitem">Statistics</string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="db_icon_desc">Database Icon</string>
     <string name="server_port_icon_desc">Server port icon</string>
     <string name="wifi_ip_icon_desc">Wifi IP icon</string>

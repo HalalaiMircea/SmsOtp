@@ -42,6 +42,16 @@ public class WebServer extends NanoHTTPD {
     }
 
     @Override
+    public void start() {
+        try {
+            super.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
+            Log.d(TAG, "Server running! Point your browsers to http://localhost:8080/");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public Response serve(IHTTPSession session) {
         Map<String, String> files = new HashMap<>();
         Method method = session.getMethod();
@@ -61,10 +71,14 @@ public class WebServer extends NanoHTTPD {
                     "Only POST requests are allowed!");
         }
 
-        return handleRequest(session, session.getParameters());
+        return handleRequest(session.getParameters());
     }
 
-    private Response handleRequest(IHTTPSession session, Map<String, List<String>> params) {
+    /**
+     * This method checks the correctness of the request and returns either the response from
+     * {@link #handleGoodRequest(Map)} or a response specific to the error.
+     */
+    private Response handleRequest(Map<String, List<String>> params) {
         // We check if the request misses any credential
         if (!params.containsKey("username") || !params.containsKey("password"))
             return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_PLAINTEXT,
@@ -88,6 +102,14 @@ public class WebServer extends NanoHTTPD {
         return response;
     }
 
+    /**
+     * Inserts a command linked to the authenticated user into the Database. Then uses returned command id
+     * in a JSON response, or if the {@link #sendManySms(List, String)} throws JSONException, it returns an
+     * INTERNAL_ERROR response.
+     *
+     * @param params request parameters
+     * @return a response with either the json or exception message in plaintext
+     */
     @SuppressWarnings("ConstantConditions")
     private Response handleGoodRequest(Map<String, List<String>> params) {
         try {
@@ -120,6 +142,7 @@ public class WebServer extends NanoHTTPD {
      * @param phones List of String phone numbers
      * @param msg    Text message to send
      * @return JSON parameters to insert into DB and append to response JSON
+     * @throws JSONException if JSON parsing failed
      */
     private JSONObject sendManySms(List<String> phones, String msg) throws JSONException {
         String packageName = Objects.requireNonNull(getClass().getPackage()).getName()

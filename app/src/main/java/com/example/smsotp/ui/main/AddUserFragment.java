@@ -49,7 +49,6 @@ public class AddUserFragment extends Fragment {
                 user = AppDatabase.getInstance(getContext()).userDao().getById(userId);
                 requireActivity().runOnUiThread(() -> {
                     binding.userField.getEditText().setText(user.username);
-                    //TODO Should I put password there? IDK DOESN'T MATTER
                     binding.passField.getEditText().setText(user.password);
                 });
             });

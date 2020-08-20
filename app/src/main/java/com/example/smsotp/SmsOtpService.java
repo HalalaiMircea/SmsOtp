@@ -13,13 +13,8 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-import java.io.IOException;
-
-import fi.iki.elonen.NanoHTTPD;
-
 public class SmsOtpService extends Service {
     private static final String TAG = "SMSOTP_Service";
-    private static final String CHANNEL_ID = "ForegroundServiceChannel";
     private static boolean isRunning = false;
     private WebServer webServer;
 
@@ -36,14 +31,9 @@ public class SmsOtpService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (!webServer.wasStarted()) {
             isRunning = true;
-            Log.d(TAG, "Service started!");
             createNotification();
-            try {
-                webServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
-                Log.d(TAG, "Server running! Point your browsers to http://localhost:8080/");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            webServer.start();
+            Log.d(TAG, "Service started!");
         } else
             Log.w(TAG, "onStartCommand called more than once in the same service session!");
 
@@ -58,10 +48,11 @@ public class SmsOtpService extends Service {
     }
 
     private void createNotification() {
+        final String CHANNEL_ID = "ForegroundServiceChannel";
+
         // Required for Oreo (API 26) and greater
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID, "Foreground Service Channel",
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Foreground Service Channel",
                     NotificationManager.IMPORTANCE_DEFAULT
             );
             NotificationManager manager = getSystemService(NotificationManager.class);
@@ -71,13 +62,12 @@ public class SmsOtpService extends Service {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pi = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
-        Notification notification =
-                new NotificationCompat.Builder(this, CHANNEL_ID)
-                        .setContentTitle(getText(R.string.service_notifi_title))
-                        .setContentText(getText(R.string.service_notifi_msg))
-                        .setSmallIcon(R.drawable.ic_baseline_web_24)
-                        .setContentIntent(pi)
-                        .build();
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle(getText(R.string.service_notifi_title))
+                .setContentText(getText(R.string.service_notifi_msg))
+                .setSmallIcon(R.drawable.ic_baseline_web_24)
+                .setContentIntent(pi)
+                .build();
 
         startForeground(1, notification);
     }
