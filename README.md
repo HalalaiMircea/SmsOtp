@@ -1,11 +1,19 @@
 # SMSOTP
 
 SMSOTP is an Android application used for sending SMS messages from
-other devices over the HTTP protocol.
-The app has an embedded web server which exposes a simple REST API for
-sending SMS messages.
-It also has a simple SQLite database containing User and Command tables.
-The app also features a UI for managing user credentials.
+other devices over the HTTP protocol. The app has an embedded web server
+which exposes a simple REST API for sending SMS messages. It also has a
+simple SQLite database containing User and Command tables. The app also
+features a UI for managing user credentials.
+
+## Getting started
+
+The simplest way of working on the project is to import it from Gradle.
+Be sure to use Android Studio v4.0 or higher and update your SDK to API
+level 30. After you setup your IDE, just select *Import from Gradle*
+when first starting up Android Studio then select the `build.gradle`
+file at the root directory of the project and wait for Gradle to sync
+with the build script.
 
 ## Dependencies
 
@@ -63,6 +71,8 @@ structure/hierarchy.
 
 ## Android version support
 
-The application was tested on a version as low as Lollipop 5.1. So the required minimum SDK version is 22.
-Also I used Java language level 8 for lambdas. I'm disappointed the current Android SDK doesn't support newer Java language levels, to support var for example.
-That's why I might convert the project to Kotlin in the future.
+The application was tested on a version as low as Lollipop 5.1. So the
+required minimum SDK version is 22. Also I used Java language level 8
+for lambdas. I'm disappointed the current Android SDK doesn't support
+newer Java language levels, to support var for example. That's why I
+might convert the project to Kotlin in the future.
