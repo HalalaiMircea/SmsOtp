@@ -52,8 +52,10 @@ public class UserListFragment extends Fragment {
 
         Thread thread = new Thread(() -> {
             List<User> result = AppDatabase.getInstance(context).userDao().getAll();
-            Adapter adapter = new Adapter(result);
-            requireActivity().runOnUiThread(() -> binding.list.setAdapter(adapter));
+            requireActivity().runOnUiThread(() -> {
+                Adapter adapter = new Adapter(result);
+                binding.list.setAdapter(adapter);
+            });
         });
         thread.start();
 

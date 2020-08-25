@@ -14,7 +14,9 @@ import com.example.smsotp.entity.Command;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +37,7 @@ public class WebServer extends NanoHTTPD {
         WebServer.port = port;
         this.context = context;
         this.database = database;
+//        addMappings();
     }
 
     public WebServer(Context context, AppDatabase database) {
@@ -51,6 +54,11 @@ public class WebServer extends NanoHTTPD {
         }
     }
 
+    /*@Override
+    public void addMappings() {
+        super.addMappings();
+    }*/
+
     @Override
     public Response serve(IHTTPSession session) {
         Map<String, String> files = new HashMap<>();
@@ -66,19 +74,48 @@ public class WebServer extends NanoHTTPD {
             }
         }
 
+        switch (session.getUri()) {
+            case "/":
+                return handleIndexRequest(session);
+            case "/api/sms":
+                return handleSmsRequest(session.getParameters(), method);
+            default:
+                return newFixedLengthResponse(Response.Status.NOT_FOUND, NanoHTTPD.MIME_PLAINTEXT,
+                        "Error 404: Not Found");
+        }
+
+    }
+
+    private Response handleIndexRequest(IHTTPSession session) {
+        BufferedReader reader;
+        try {
+            StringBuilder answer = new StringBuilder();
+            reader = new BufferedReader(new InputStreamReader(context.getAssets().open("index.html")));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("${ip}"))
+                    line = line.replace("${ip}", session.getRemoteHostName());
+                answer.append(line);
+            }
+            reader.close();
+            return newFixedLengthResponse(answer.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
+                    "SERVER INTERNAL ERROR: IOException: " + e.getMessage());
+        }
+    }
+
+    /**
+     * This method checks the correctness of the request to the /api/sms route and returns a response for
+     * each case
+     */
+    @SuppressWarnings("ConstantConditions")
+    private Response handleSmsRequest(Map<String, List<String>> params, Method method) {
         if (method != Method.POST) {
             return newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED, MIME_PLAINTEXT,
                     "Only POST requests are allowed!");
         }
-
-        return handleRequest(session.getParameters());
-    }
-
-    /**
-     * This method checks the correctness of the request and returns either the response from
-     * {@link #handleGoodRequest(Map)} or a response specific to the error.
-     */
-    private Response handleRequest(Map<String, List<String>> params) {
         // We check if the request misses any credential
         if (!params.containsKey("username") || !params.containsKey("password"))
             return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_PLAINTEXT,
@@ -87,52 +124,34 @@ public class WebServer extends NanoHTTPD {
         // If returned password string is null, username doesn't exist
         String password = database.userDao().getPasswordByUsername(Objects.requireNonNull(params.get(
                 "username")).get(0));
-        //noinspection ConstantConditions
         if (password == null || !password.equals(params.get("password").get(0)))
             return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_PLAINTEXT,
                     "Incorrect username and/or password!");
 
         Response response;
         if (params.containsKey("phones") && params.containsKey("message")) {
-            response = handleGoodRequest(params);
+            try {
+                JSONObject jsonParams = sendManySms(params.get("phones"), params.get("message").get(0));
+                int userId = database.userDao().getIdByUsername(params.get("username").get(0));
+                int commId = (int) database.commandDao().insert(new Command(userId, jsonParams.toString(),
+                        new Date()));
+
+                JSONObject jsonResponse = new JSONObject();
+                jsonResponse.put("commandId", commId)
+                        .put("userId", userId)
+                        .put("message", jsonParams.getString("message"))
+                        .put("results", jsonParams.get("results"));
+                response = newFixedLengthResponse(Response.Status.OK, MIME_JSON, jsonResponse.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+                response = newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
+                        "Could not convert params to JSON\n" + e.getMessage());
+            }
         } else
             response = newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT,
                     "Request query missing phones and/or message parameters!");
 
         return response;
-    }
-
-    /**
-     * Inserts a command linked to the authenticated user into the Database. Then uses returned command id
-     * in a JSON response, or if the {@link #sendManySms(List, String)} throws JSONException, it returns an
-     * INTERNAL_ERROR response.
-     *
-     * @param params request parameters
-     * @return a response with either the json or exception message in plaintext
-     */
-    @SuppressWarnings("ConstantConditions")
-    private Response handleGoodRequest(Map<String, List<String>> params) {
-        try {
-            JSONObject jsonParams = sendManySms(params.get("phones"), params.get("message").get(0));
-            int userId = database.userDao().getIdByUsername(params.get("username").get(0));
-            int commId = (int) database.commandDao().insert(new Command(userId, jsonParams.toString(),
-                    new Date()));
-
-//            for (Command comm : database.commandDao().getAll()) {
-//                Log.d(TAG, comm + "\n");
-//            }
-
-            JSONObject jsonResponse = new JSONObject();
-            jsonResponse.put("commandId", commId)
-                    .put("userId", userId)
-                    .put("message", jsonParams.getString("message"))
-                    .put("results", jsonParams.get("results"));
-            return newFixedLengthResponse(Response.Status.OK, MIME_JSON, jsonResponse.toString());
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
-                    "Could not convert params to JSON\n" + e.getMessage());
-        }
     }
 
     /**
