@@ -1,5 +1,6 @@
 package com.example.smsotp;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,6 +26,11 @@ public class MainActivity extends AppCompatActivity {
             if (checkSelfPermission(SEND_SMS) == PackageManager.PERMISSION_DENIED) {
                 requestPermissions(new String[]{SEND_SMS}, 10);
             }
+        }
+
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Server started automatically in debug build variant!");
+            startService(new Intent(this, SmsOtpService.class));
         }
     }
 

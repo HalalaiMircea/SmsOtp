@@ -36,6 +36,8 @@ public class StatusFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         binding = FragmentStatusBinding.bind(view);
 
+        binding.serverSwitch.setChecked(SmsOtpService.isRunning());
+
         binding.serverSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             Context context = requireContext();
             Intent serviceIntent = new Intent(context, SmsOtpService.class);
@@ -45,7 +47,6 @@ public class StatusFragment extends Fragment {
                 context.stopService(serviceIntent);
             }
         });
-        binding.serverSwitch.setChecked(SmsOtpService.isRunning());
 
         binding.ipTextView.setText(getWifiIPAddress());
         binding.dbTextView.setText(AppDatabase.getInstance(getContext()).getOpenHelper().getDatabaseName());

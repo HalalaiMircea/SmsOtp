@@ -14,9 +14,10 @@ import com.example.smsotp.entity.Command;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -76,29 +77,43 @@ public class WebServer extends NanoHTTPD {
 
         switch (session.getUri()) {
             case "/":
+            case "/index.html":
                 return handleIndexRequest(session);
             case "/api/sms":
                 return handleSmsRequest(session.getParameters(), method);
             default:
-                return newFixedLengthResponse(Response.Status.NOT_FOUND, NanoHTTPD.MIME_PLAINTEXT,
-                        "Error 404: Not Found");
+                return handleResourceRequest(session);
         }
 
     }
 
-    private Response handleIndexRequest(IHTTPSession session) {
-        BufferedReader reader;
+    private Response handleResourceRequest(IHTTPSession session) {
         try {
-            StringBuilder answer = new StringBuilder();
-            reader = new BufferedReader(new InputStreamReader(context.getAssets().open("index.html")));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("${ip}"))
-                    line = line.replace("${ip}", session.getRemoteHostName());
-                answer.append(line);
+            String uri = session.getUri().substring(1);
+            InputStream inputStream = context.getAssets().open(uri);
+            String resType = uri.substring(uri.lastIndexOf('.') + 1);
+
+            return newChunkedResponse(Response.Status.OK, mimeTypes().get(resType), inputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT,
+                    Response.Status.NOT_FOUND.getDescription());
+        }
+    }
+
+    private Response handleIndexRequest(IHTTPSession session) {
+        try {
+            InputStream inputStream = context.getAssets().open("index.html");
+            ByteArrayOutputStream result = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) != -1) {
+                result.write(buffer, 0, length);
             }
-            reader.close();
-            return newFixedLengthResponse(answer.toString());
+            String html = result.toString(StandardCharsets.UTF_8.name());
+            html = html.replace("${ip}", session.getRemoteHostName());
+
+            return newFixedLengthResponse(html);
         } catch (IOException e) {
             e.printStackTrace();
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
