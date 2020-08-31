@@ -19,7 +19,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setSupportActionBar(findViewById(R.id.toolbar));
 
         // Required for Marshmallow (API 23) and greater
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

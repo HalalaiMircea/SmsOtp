@@ -3,7 +3,11 @@ package com.example.smsotp.ui.main;
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,6 +27,8 @@ public class AddUserFragment extends Fragment {
     private AppCompatActivity activity;
     private User user;
     private Integer userId;
+    private EditText userEditText;
+    private EditText passEditText;
 
     public AddUserFragment() {
         super(R.layout.fragment_add_user);
@@ -31,75 +37,76 @@ public class AddUserFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        activity = (AppCompatActivity) requireActivity();
+
         Bundle args = requireArguments();
         if (!args.isEmpty()) {
             userId = args.getInt(UserFragment.ARG_ID);
         }
+        setHasOptionsMenu(true);
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         binding = FragmentAddUserBinding.bind(view);
-        activity = (AppCompatActivity) requireActivity();
+        userEditText = Objects.requireNonNull(binding.userField.getEditText());
+        passEditText = Objects.requireNonNull(binding.passField.getEditText());
+
+        activity.setSupportActionBar(binding.include.toolbar);
+        binding.include.toolbar.setTitle("");
 
         // If we got here from action_editUser (if userId arg was provided)
         if (userId != null) {
             Thread fetchThread = new Thread(() -> {
-                user = AppDatabase.getInstance(getContext()).userDao().getById(userId);
-                requireActivity().runOnUiThread(() -> {
-                    binding.userField.getEditText().setText(user.username);
-                    binding.passField.getEditText().setText(user.password);
+                user = AppDatabase.getInstance(activity).userDao().getById(userId);
+                activity.runOnUiThread(() -> {
+                    userEditText.setText(user.username);
+                    passEditText.setText(user.password);
                 });
             });
             fetchThread.start();
-            // We change button's text to make sense when updating user's data
-            binding.createButton.setText(R.string.save_changes);
-        }
-
-        if (userId == null)
-            binding.createButton.setOnClickListener(this::onCreateClick);
-        else
-            binding.createButton.setOnClickListener(this::onEditClick);
-    }
-
-    private void onCreateClick(View view) {
-        String userText =
-                Objects.requireNonNull(binding.userField.getEditText()).getText().toString().trim();
-        String passText =
-                Objects.requireNonNull(binding.passField.getEditText()).getText().toString().trim();
-        if (validateInputs(userText, passText)) {
-            new Thread(() -> {
-                try {
-                    AppDatabase.getInstance(activity).userDao().insert(new User(userText, passText));
-                    activity.onBackPressed();
-                } catch (SQLiteConstraintException ex) {
-                    Log.e(TAG, Objects.requireNonNull(ex.getMessage()));
-                    activity.runOnUiThread(() -> binding.userField.setError("Username already taken!"));
-                }
-            }).start();
         }
     }
 
-    private void onEditClick(View view) {
-        String userText =
-                Objects.requireNonNull(binding.userField.getEditText()).getText().toString().trim();
-        String passText =
-                Objects.requireNonNull(binding.passField.getEditText()).getText().toString().trim();
-        if (validateInputs(userText, passText)) {
-            // If input is valid, we update this user's data
-            user.username = userText;
-            user.password = passText;
-            new Thread(() -> {
-                try {
-                    AppDatabase.getInstance(activity).userDao().update(user);
-                    activity.onBackPressed();
-                } catch (SQLiteConstraintException ex) {
-                    Log.e(TAG, Objects.requireNonNull(ex.getMessage()));
-                    activity.runOnUiThread(() -> binding.userField.setError("Username already taken!"));
-                }
-            }).start();
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_add_user, menu);
+        // We change item's title to make sense when updating user's data
+        if (userId != null)
+            menu.findItem(R.id.save_user).setTitle(R.string.save_changes);
+        else menu.findItem(R.id.save_user).setTitle(R.string.create_user);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.save_user) {
+            String userText = userEditText.getText().toString().trim();
+            String passText = passEditText.getText().toString().trim();
+            if (validateInputs(userText, passText)) {
+                Thread thread = new Thread(() -> {
+                    try {
+                        // If we entered from main fragment add new user action
+                        if (userId == null) {
+                            user = new User(userText, passText);
+                            AppDatabase.getInstance(activity).userDao().insert(user);
+                        } else {// Else we entered from existing user edit action
+                            user.username = userText;
+                            user.password = passText;
+                            AppDatabase.getInstance(activity).userDao().update(user);
+                        }
+                        activity.onBackPressed();
+                    } catch (SQLiteConstraintException ex) {
+                        Log.e(TAG, Objects.requireNonNull(ex.getMessage()));
+                        activity.runOnUiThread(() -> binding.userField.setError("Username already taken!"));
+                    }
+                });
+                thread.start();
+            }
         }
+        return super.onOptionsItemSelected(item);
     }
 
     private boolean validateInputs(String userText, String passText) {

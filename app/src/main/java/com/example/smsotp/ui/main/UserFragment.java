@@ -1,6 +1,5 @@
 package com.example.smsotp.ui.main;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -14,6 +13,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
@@ -42,17 +42,18 @@ public class UserFragment extends Fragment {
         setHasOptionsMenu(true);
     }
 
-    @SuppressLint("SetTextI18n")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         binding = FragmentUserBinding.inflate(inflater, container, false);
+        ((AppCompatActivity) requireActivity()).setSupportActionBar(binding.include.toolbar);
 
         Thread fetchDataThread = new Thread(() -> {
             user = AppDatabase.getInstance(getContext()).userDao().getById(userId);
             requireActivity().runOnUiThread(() -> {
-                binding.idTextView.setText("User ID: " + user.id);
-                binding.nameTextView.setText("Username: " + user.username);
+                String text = getString(R.string.user_id) + ": " + user.id;
+                binding.idTextView.setText(text);
+                binding.include.toolbar.setTitle(user.username);
             });
         });
         fetchDataThread.start();
@@ -69,7 +70,6 @@ public class UserFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_main, menu);
-//        menu.removeItem(R.id.action_settings);
         super.onCreateOptionsMenu(menu, inflater);
     }
 
