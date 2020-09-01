@@ -38,7 +38,6 @@ public class WebServer extends NanoHTTPD {
         WebServer.port = port;
         this.context = context;
         this.database = database;
-//        addMappings();
     }
 
     public WebServer(Context context, AppDatabase database) {
@@ -54,11 +53,6 @@ public class WebServer extends NanoHTTPD {
             e.printStackTrace();
         }
     }
-
-    /*@Override
-    public void addMappings() {
-        super.addMappings();
-    }*/
 
     @Override
     public Response serve(IHTTPSession session) {

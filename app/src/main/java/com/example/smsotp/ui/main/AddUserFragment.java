@@ -54,6 +54,8 @@ public class AddUserFragment extends Fragment {
 
         activity.setSupportActionBar(binding.include.toolbar);
         binding.include.toolbar.setTitle("");
+        binding.include.toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
+        binding.include.toolbar.setNavigationOnClickListener(v -> activity.onBackPressed());
 
         // If we got here from action_editUser (if userId arg was provided)
         if (userId != null) {
@@ -72,9 +74,9 @@ public class AddUserFragment extends Fragment {
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_add_user, menu);
         // We change item's title to make sense when updating user's data
-        if (userId != null)
-            menu.findItem(R.id.save_user).setTitle(R.string.save_changes);
-        else menu.findItem(R.id.save_user).setTitle(R.string.create_user);
+        int titleRes = userId != null ? R.string.save_changes : R.string.create_user;
+        menu.findItem(R.id.save_user).setTitle(titleRes);
+
         super.onCreateOptionsMenu(menu, inflater);
     }
 

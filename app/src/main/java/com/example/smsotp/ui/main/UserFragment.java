@@ -47,6 +47,8 @@ public class UserFragment extends Fragment {
                              Bundle savedInstanceState) {
         binding = FragmentUserBinding.inflate(inflater, container, false);
         ((AppCompatActivity) requireActivity()).setSupportActionBar(binding.include.toolbar);
+        binding.include.toolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_24);
+        binding.include.toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
 
         Thread fetchDataThread = new Thread(() -> {
             user = AppDatabase.getInstance(getContext()).userDao().getById(userId);
