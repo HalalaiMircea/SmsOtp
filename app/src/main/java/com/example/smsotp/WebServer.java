@@ -126,30 +126,29 @@ public class WebServer extends NanoHTTPD {
                     "Only POST requests are allowed!");
         }
         // We check if the request misses any credential
-        if (!params.containsKey("username") || !params.containsKey("password"))
+        if (!params.containsKey(Keys.USERNAME) || !params.containsKey(Keys.PASSWORD))
             return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_PLAINTEXT,
                     "Missing username or password parameters!");
 
         // If returned password string is null, username doesn't exist
-        String password = database.userDao().getPasswordByUsername(Objects.requireNonNull(params.get(
-                "username")).get(0));
-        if (password == null || !password.equals(params.get("password").get(0)))
+        String password = database.userDao().getPasswordByUsername(params.get(Keys.USERNAME).get(0));
+        if (password == null || !password.equals(params.get(Keys.PASSWORD).get(0)))
             return newFixedLengthResponse(Response.Status.UNAUTHORIZED, MIME_PLAINTEXT,
                     "Incorrect username and/or password!");
 
         Response response;
-        if (params.containsKey("phones") && params.containsKey("message")) {
+        if (checkParamValidity(params.get(Keys.PHONES)) && checkParamValidity(params.get(Keys.MESSAGE))) {
             try {
-                JSONObject jsonParams = sendManySms(params.get("phones"), params.get("message").get(0));
-                int userId = database.userDao().getIdByUsername(params.get("username").get(0));
+                JSONObject jsonParams = sendManySms(params.get(Keys.PHONES), params.get(Keys.MESSAGE).get(0));
+                int userId = database.userDao().getIdByUsername(params.get(Keys.USERNAME).get(0));
                 int commId = (int) database.commandDao().insert(new Command(userId, jsonParams.toString(),
                         new Date()));
 
                 JSONObject jsonResponse = new JSONObject();
                 jsonResponse.put("commandId", commId)
                         .put("userId", userId)
-                        .put("message", jsonParams.getString("message"))
-                        .put("results", jsonParams.get("results"));
+                        .put(Keys.MESSAGE, jsonParams.getString(Keys.MESSAGE))
+                        .put(Keys.RESULTS, jsonParams.get(Keys.RESULTS));
                 response = newFixedLengthResponse(Response.Status.OK, MIME_JSON, jsonResponse.toString());
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -158,9 +157,23 @@ public class WebServer extends NanoHTTPD {
             }
         } else
             response = newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT,
-                    "Request query missing phones and/or message parameters!");
+                    "Request query missing phones and/or message parameters!\nOr one or more phone strings " +
+                            "are empty/null");
 
         return response;
+    }
+
+    private boolean checkParamValidity(List<String> paramValue) {
+        // If request query key for this value is missing
+        if (paramValue == null) return false;
+
+        // If any element is invalid
+        for (String value : paramValue) {
+            if (value == null || value.trim().isEmpty())
+                return false;
+        }
+
+        return !paramValue.isEmpty();
     }
 
     /**
@@ -218,18 +231,17 @@ public class WebServer extends NanoHTTPD {
         context.unregisterReceiver(sentReceiver);   // Prevent memory leak
 
         JSONObject json = new JSONObject();
-        json.put("message", msg);
+        json.put(Keys.MESSAGE, msg);
         for (int i = 0; i < phones.size(); i++) {
             JSONObject phoneStatusPair = new JSONObject();
             phoneStatusPair.put("phone", phones.get(i))
                     .put("status", resultTypes[i]);
-            json.accumulate("results", phoneStatusPair);
+            json.accumulate(Keys.RESULTS, phoneStatusPair);
         }
 
         return json;
     }
 
-    @SuppressWarnings("unused")
     private enum SmsResultType {
         OK(Activity.RESULT_OK),
         ERROR_GENERIC_FAILURE(SmsManager.RESULT_ERROR_GENERIC_FAILURE),
@@ -254,5 +266,14 @@ public class WebServer extends NanoHTTPD {
         public int getCode() {
             return code;
         }
+    }
+
+    private static class Keys {
+
+        static final String PHONES = "phones";
+        static final String MESSAGE = "message";
+        static final String USERNAME = "username";
+        static final String PASSWORD = "password";
+        static final String RESULTS = "results";
     }
 }
