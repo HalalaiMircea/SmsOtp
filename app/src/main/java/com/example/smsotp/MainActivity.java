@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "Server started automatically in debug build variant!");
-            startService(new Intent(this, SmsOtpService.class));
+            startService(new Intent(this, WebService.class));
         }
     }
 

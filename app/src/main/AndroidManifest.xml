@@ -25,7 +25,7 @@
             </intent-filter>
         </activity>
         <service
-            android:name="com.example.smsotp.SmsOtpService"
+            android:name="com.example.smsotp.WebService"
             android:description="@string/service_desc"
             android:enabled="true"
             android:exported="false" />

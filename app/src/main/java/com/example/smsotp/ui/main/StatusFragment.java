@@ -13,8 +13,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.smsotp.AppDatabase;
 import com.example.smsotp.R;
-import com.example.smsotp.SmsOtpService;
-import com.example.smsotp.WebServer;
+import com.example.smsotp.WebService;
 import com.example.smsotp.databinding.FragmentStatusBinding;
 
 import java.math.BigInteger;
@@ -36,11 +35,11 @@ public class StatusFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         binding = FragmentStatusBinding.bind(view);
 
-        binding.serverSwitch.setChecked(SmsOtpService.isRunning());
+        binding.serverSwitch.setChecked(WebService.isRunning());
 
         binding.serverSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             Context context = requireContext();
-            Intent serviceIntent = new Intent(context, SmsOtpService.class);
+            Intent serviceIntent = new Intent(context, WebService.class);
             if (isChecked) {
                 context.startService(serviceIntent);
             } else {
@@ -50,7 +49,7 @@ public class StatusFragment extends Fragment {
 
         binding.ipTextView.setText(getWifiIPAddress());
         binding.dbTextView.setText(AppDatabase.getInstance(getContext()).getOpenHelper().getDatabaseName());
-        binding.portTextView.setText(String.valueOf(WebServer.port));
+        binding.portTextView.setText(String.valueOf(WebService.WebServer.port));
     }
 
     private String getWifiIPAddress() {
