@@ -25,14 +25,18 @@
             font-family: "Courier New", serif;
         }
 
+
     </style>
 </head>
 <body>
 <h1>HTTP Status ${status}</h1>
 <hr>
-<p><span>Message</span> ${path}</p>
+<p><span>Path</span> ${path}</p>
+<p><span>Description</span> ${description}</p>
+<#if ex_stacktrace??>
 <p><span>Exception</span></p>
 <p class="ex-block">${ex_stacktrace}</p>
+</#if>
 <hr>
 <h2>NanoHTTPD/2.3.1</h2>
 </body>

@@ -12,6 +12,7 @@ import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 
 import com.example.smsotp.AppDatabase;
@@ -52,10 +53,11 @@ public class AddUserFragment extends Fragment {
         userEditText = Objects.requireNonNull(binding.userField.getEditText());
         passEditText = Objects.requireNonNull(binding.passField.getEditText());
 
-        activity.setSupportActionBar(binding.include.toolbar);
-        binding.include.toolbar.setTitle("");
-        binding.include.toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
-        binding.include.toolbar.setNavigationOnClickListener(v -> activity.onBackPressed());
+        Toolbar toolbar = binding.include.toolbar;
+        activity.setSupportActionBar(toolbar);
+        toolbar.setTitle("");
+        toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
+        toolbar.setNavigationOnClickListener(v -> activity.onBackPressed());
 
         // If we got here from action_editUser (if userId arg was provided)
         if (userId != null) {
@@ -128,8 +130,6 @@ public class AddUserFragment extends Fragment {
 
         binding.userField.setError(null);
         binding.passField.setError(null);
-        /*binding.userField.setErrorEnabled(false);
-        binding.passField.setErrorEnabled(false);*/
         return true;
     }
 
