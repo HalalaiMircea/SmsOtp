@@ -22,6 +22,7 @@ import com.example.smsotp.entity.Command;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.XML;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -284,7 +285,13 @@ public class WebService extends Service {
                             .put("userId", userId)
                             .put(Keys.MESSAGE, jsonParams.getString(Keys.MESSAGE))
                             .put(Keys.RESULTS, jsonParams.get(Keys.RESULTS));
-                    response = newFixedLengthResponse(Response.Status.OK, MIME_JSON, jsonResponse.toString());
+
+                    boolean useXML = Objects.nonNull(params.get("format")) &&
+                            params.get("format").get(0).toLowerCase().trim().equals("xml");
+
+                    response = newFixedLengthResponse(Response.Status.OK,
+                            useXML ? mimeTypes().get("xml") : MIME_JSON,
+                            useXML ? XML.toString(jsonResponse, "root") : jsonResponse.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
                     response = handleError(Response.Status.INTERNAL_ERROR, session.getUri(),

@@ -54,6 +54,8 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
+    //noinspection DuplicatePlatformClasses
+    implementation group: 'org.json', name: 'json', version: '20200518'
     // Apache Freemarker
     implementation 'org.freemarker:freemarker-gae:2.3.30'
     // NanoHTTPD
