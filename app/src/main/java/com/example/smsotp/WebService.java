@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.telephony.SmsManager;
 import android.util.Log;
+import android.util.Patterns;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -272,7 +273,7 @@ public class WebService extends Service {
                         "Incorrect username and/or password!");
 
             Response response;
-            if (isParamNonBlank(params.get(Keys.PHONES)) && isParamNonBlank(params.get(Keys.MESSAGE))) {
+            if (isParamNonBlank(params.get(Keys.MESSAGE)) && isPhonesValid(params.get(Keys.PHONES))) {
                 try {
                     JSONObject jsonParams = sendManySms(params.get(Keys.PHONES),
                             params.get(Keys.MESSAGE).get(0));
@@ -297,12 +298,21 @@ public class WebService extends Service {
                     response = handleError(Response.Status.INTERNAL_ERROR, session.getUri(), e,
                             "Could not convert params to JSON\n" + e.getMessage());
                 }
-            } else
-                response = handleError(Response.Status.BAD_REQUEST, session.getUri(), null,
-                        "Request query missing phones and/or message parameters, or their values are blank!"
-                );
+            } else response = handleError(Response.Status.BAD_REQUEST, session.getUri(), null,
+                    "Missing or invalid message and/or phones parameters!");
 
             return response;
+        }
+
+        private boolean isPhonesValid(List<String> phones) {
+            if (isParamNonBlank(phones)) {
+                for (String phone : phones) {
+                    if (!Patterns.PHONE.matcher(phone).matches())
+                        return false;
+                }
+                return true;
+            }
+            return false;
         }
 
         private boolean isParamNonBlank(List<String> paramValue) {
@@ -314,7 +324,6 @@ public class WebService extends Service {
                 if (value == null || value.trim().isEmpty())
                     return false;
             }
-
             return !paramValue.isEmpty();
         }
 
