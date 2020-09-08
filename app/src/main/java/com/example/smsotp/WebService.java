@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
@@ -57,7 +56,7 @@ public class WebService extends Service {
 
     @Override
     public void onCreate() {
-        webServer = new WebServer(this, AppDatabase.getInstance(this));
+        webServer = new WebServer(this, 8080);
     }
 
     @Override
@@ -112,21 +111,25 @@ public class WebService extends Service {
     }
 
     public static class WebServer extends NanoHTTPD {
-
-        private static final String MIME_JSON = "application/json";
         public static int port = 8080;
+
+        static {
+            mimeTypes().put("json", "application/json");
+            mimeTypes().put("ftl", "text/html");
+        }
+
         private Context context;
         private AppDatabase database;
-        private Configuration templatingCfg;
+        private Configuration freemarkerCfg;
 
-        public WebServer(Context context, AppDatabase database, int port) {
+        public WebServer(Context context, int port) {
             super(port);
             WebServer.port = port;
             this.context = context;
-            this.database = database;
+            this.database = AppDatabase.getInstance(context);
 
-            templatingCfg = new Configuration(new Version(2, 3, 30));
-            templatingCfg.setDefaultEncoding(StandardCharsets.UTF_8.name());
+            freemarkerCfg = new Configuration(new Version(2, 3, 30));
+            freemarkerCfg.setDefaultEncoding(StandardCharsets.UTF_8.name());
             try {
                 String[] list = Objects.requireNonNull(this.context.getAssets().list(""));
                 List<String> htmlFiles = Arrays.stream(list)
@@ -136,10 +139,6 @@ public class WebService extends Service {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-
-        public WebServer(Context context, AppDatabase database) {
-            this(context, database, 8080);
         }
 
         @Override
@@ -169,7 +168,6 @@ public class WebService extends Service {
 
             switch (session.getUri()) {
                 case "/":
-                case "/index.ftl":
                     return handleIndexRequest(session);
                 case "/api/sms":
                     return handleSmsRequest(session);
@@ -188,40 +186,42 @@ public class WebService extends Service {
                 while ((length = inputStream.read(buffer)) != -1) {
                     baos.write(buffer, 0, length);
                 }
-                templateLoader.putTemplate(file, baos.toByteArray());
+                // We strip the name of the extension
+                String templateName = file.substring(0, file.lastIndexOf('.'));
+                templateLoader.putTemplate(templateName, baos.toByteArray());
             }
 
-            templatingCfg.setTemplateLoader(templateLoader);
+            freemarkerCfg.setTemplateLoader(templateLoader);
+        }
+
+        private Response handleIndexRequest(IHTTPSession session) {
+            try {
+                Template template = freemarkerCfg.getTemplate("index");
+                Map<String, Object> templateData = new HashMap<>();
+                templateData.put("ip", session.getRemoteHostName());
+
+                StringWriter out = new StringWriter();
+                template.process(templateData, out);
+                return newFixedLengthResponse(out.toString());
+            } catch (IOException | TemplateException e) {
+                return handleError(Response.Status.NOT_FOUND, session.getUri(), e, null);
+            }
         }
 
         private Response handleResourceRequest(IHTTPSession session) {
             try {
                 String uri = session.getUri().substring(1);
                 InputStream inputStream = context.getAssets().open(uri);
-                String resType = uri.substring(uri.lastIndexOf('.') + 1);
+                String mimeType = getMimeTypeForFile(uri);
 
-                return newChunkedResponse(Response.Status.OK, mimeTypes().get(resType), inputStream);
+                return newChunkedResponse(Response.Status.OK, mimeType, inputStream);
             } catch (IOException e) {
-                return handleError(Response.Status.NOT_FOUND, session.getUri(), null, e);
+                return handleError(Response.Status.NOT_FOUND, session.getUri(), e,
+                        "Requested resource isn't available");
             }
         }
 
-        private Response handleIndexRequest(IHTTPSession session) {
-            try {
-                Template template = templatingCfg.getTemplate("index.ftl");
-                Map<String, Object> templateData = new HashMap<>();
-                templateData.put("ip", session.getRemoteHostName());
-
-                Writer out = new StringWriter();
-                template.process(templateData, out);
-                out.flush();
-                return newFixedLengthResponse(out.toString());
-            } catch (IOException | TemplateException e) {
-                return handleError(Response.Status.NOT_FOUND, session.getUri(), null, e);
-            }
-        }
-
-        private Response handleError(Response.Status status, String uri, String desc, Exception ex) {
+        private Response handleError(Response.Status status, String uri, Exception ex, String desc) {
             String stackString = null;
             if (ex != null) {
                 StringWriter sw = new StringWriter();
@@ -230,7 +230,7 @@ public class WebService extends Service {
                 stackString = sw.toString();
             }
             try {
-                Template template = templatingCfg.getTemplate("error.ftl");
+                Template template = freemarkerCfg.getTemplate("error");
                 Map<String, Object> dataModel = new HashMap<>();
                 dataModel.put("status", status.getDescription().replaceFirst(" ", " - "));
                 dataModel.put("path", uri);
@@ -239,11 +239,11 @@ public class WebService extends Service {
 
                 StringWriter out = new StringWriter();
                 template.process(dataModel, out);
-                return newFixedLengthResponse(out.toString());
+                return newFixedLengthResponse(status, MIME_HTML, out.toString());
             } catch (IOException | TemplateException e) {
                 e.printStackTrace();
                 return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
-                        "SERVER INTERNAL ERROR: IOException: " + e.getMessage());
+                        "SERVER INTERNAL ERROR: " + e.getMessage());
             }
         }
 
@@ -256,20 +256,20 @@ public class WebService extends Service {
             Map<String, List<String>> params = session.getParameters();
 
             if (session.getMethod() != Method.POST) {
-                return handleError(Response.Status.METHOD_NOT_ALLOWED, session.getUri(),
-                        "Only POST requests are allowed!", null);
+                return handleError(Response.Status.METHOD_NOT_ALLOWED, session.getUri(), null,
+                        "Only POST requests are allowed!");
             }
             // We check if the request misses any credential
             if (!isParamNonBlank(params.get(Keys.USERNAME)) || !isParamNonBlank(params.get(Keys.PASSWORD))) {
-                return handleError(Response.Status.UNAUTHORIZED, session.getUri(),
-                        "Missing username or password parameters!", null);
+                return handleError(Response.Status.UNAUTHORIZED, session.getUri(), null,
+                        "Missing username or password parameters!");
             }
 
             // If returned password string is null, username doesn't exist
             String password = database.userDao().getPasswordByUsername(params.get(Keys.USERNAME).get(0));
             if (password == null || !password.equals(params.get(Keys.PASSWORD).get(0)))
-                return handleError(Response.Status.UNAUTHORIZED, session.getUri(),
-                        "Incorrect username and/or password!", null);
+                return handleError(Response.Status.UNAUTHORIZED, session.getUri(), null,
+                        "Incorrect username and/or password!");
 
             Response response;
             if (isParamNonBlank(params.get(Keys.PHONES)) && isParamNonBlank(params.get(Keys.MESSAGE))) {
@@ -290,17 +290,17 @@ public class WebService extends Service {
                             params.get("format").get(0).toLowerCase().trim().equals("xml");
 
                     response = newFixedLengthResponse(Response.Status.OK,
-                            useXML ? mimeTypes().get("xml") : MIME_JSON,
+                            mimeTypes().get(useXML ? "xml" : "json"),
                             useXML ? XML.toString(jsonResponse, "root") : jsonResponse.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    response = handleError(Response.Status.INTERNAL_ERROR, session.getUri(),
-                            "Could not convert params to JSON\n" + e.getMessage(), e);
+                    response = handleError(Response.Status.INTERNAL_ERROR, session.getUri(), e,
+                            "Could not convert params to JSON\n" + e.getMessage());
                 }
             } else
-                response = handleError(Response.Status.BAD_REQUEST, session.getUri(),
-                        "Request query missing phones and/or message parameters, or their values are blank!",
-                        null);
+                response = handleError(Response.Status.BAD_REQUEST, session.getUri(), null,
+                        "Request query missing phones and/or message parameters, or their values are blank!"
+                );
 
             return response;
         }
@@ -362,11 +362,11 @@ public class WebService extends Service {
                         Thread.sleep(100);
                 }
 
-                StringBuilder stringBuilder = new StringBuilder("SMS_SENT Results: ");
+                StringBuilder sb = new StringBuilder("SMS_SENT Results: ");
                 for (int i = 0; i < phones.size(); i++)
-                    stringBuilder.append(resultTypes[i].getCode()).append(" ").append(resultTypes[i]).append('\n');
+                    sb.append(resultTypes[i].getCode()).append(" ").append(resultTypes[i]).append('\n');
 
-                Log.d(TAG, stringBuilder.toString());
+                Log.d(TAG, sb.toString());
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
