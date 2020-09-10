@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
@@ -30,9 +31,6 @@ public class UserFragment extends Fragment {
     private User user;
     private int userId;
 
-    public UserFragment() {
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,16 +44,18 @@ public class UserFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         binding = FragmentUserBinding.inflate(inflater, container, false);
-        ((AppCompatActivity) requireActivity()).setSupportActionBar(binding.include.toolbar);
-        binding.include.toolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_24);
-        binding.include.toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
+
+        Toolbar toolbar = binding.include.toolbar;
+        ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
+        toolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_24);
+        toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
 
         Thread fetchDataThread = new Thread(() -> {
             user = AppDatabase.getInstance(getContext()).userDao().getById(userId);
             requireActivity().runOnUiThread(() -> {
                 String text = getString(R.string.user_id) + ": " + user.id;
                 binding.idTextView.setText(text);
-                binding.include.toolbar.setTitle(user.username);
+                toolbar.setTitle(user.username);
             });
         });
         fetchDataThread.start();
@@ -65,7 +65,6 @@ public class UserFragment extends Fragment {
             passedArgs.putInt(ARG_ID, userId);
             Navigation.findNavController(v).navigate(R.id.action_editUser, passedArgs);
         });
-
         return binding.getRoot();
     }
 

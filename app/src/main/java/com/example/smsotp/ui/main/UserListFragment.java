@@ -23,19 +23,9 @@ import java.util.List;
 
 import static androidx.navigation.Navigation.findNavController;
 
-/**
- * A fragment representing a list of Users.
- */
 public class UserListFragment extends Fragment {
-
+    private static final String TAG = "UserListFragment";
     private FragmentUserListBinding binding;
-
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
-    public UserListFragment() {
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -43,11 +33,9 @@ public class UserListFragment extends Fragment {
         binding = FragmentUserListBinding.inflate(inflater, container, false);
 
         final Context context = getContext();
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
             binding.list.setLayoutManager(new GridLayoutManager(context, 2));
-        } else {
-            binding.list.setLayoutManager(new LinearLayoutManager(context));
-        }
+        else binding.list.setLayoutManager(new LinearLayoutManager(context));
         binding.list.setHasFixedSize(true);
 
         Thread thread = new Thread(() -> {
@@ -58,7 +46,6 @@ public class UserListFragment extends Fragment {
             });
         });
         thread.start();
-
         return binding.getRoot();
     }
 

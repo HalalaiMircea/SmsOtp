@@ -3,10 +3,12 @@ package com.example.smsotp.ui.main;
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
@@ -31,10 +33,6 @@ public class AddUserFragment extends Fragment {
     private EditText userEditText;
     private EditText passEditText;
 
-    public AddUserFragment() {
-        super(R.layout.fragment_add_user);
-    }
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,8 +46,10 @@ public class AddUserFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        binding = FragmentAddUserBinding.bind(view);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        binding = FragmentAddUserBinding.inflate(inflater, container, false);
+
         userEditText = Objects.requireNonNull(binding.userField.getEditText());
         passEditText = Objects.requireNonNull(binding.passField.getEditText());
 
@@ -59,7 +59,7 @@ public class AddUserFragment extends Fragment {
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
         toolbar.setNavigationOnClickListener(v -> activity.onBackPressed());
 
-        // If we got here from action_editUser (if userId arg was provided)
+        // If we came here from action_editUser (if userId arg was provided)
         if (userId != null) {
             Thread fetchThread = new Thread(() -> {
                 user = AppDatabase.getInstance(activity).userDao().getById(userId);
@@ -70,6 +70,7 @@ public class AddUserFragment extends Fragment {
             });
             fetchThread.start();
         }
+        return binding.getRoot();
     }
 
     @Override

@@ -27,8 +27,7 @@ public abstract class AppDatabase extends RoomDatabase {
             return instance;
         }
         synchronized (AppDatabase.class) {
-            instance = Room.databaseBuilder(context.getApplicationContext(),
-                    AppDatabase.class, "smsotp")
+            instance = Room.databaseBuilder(context.getApplicationContext(), AppDatabase.class, "smsotp")
                     .fallbackToDestructiveMigration()
                     .addCallback(new Callback() {
                         @Override
