@@ -17,18 +17,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
-import com.example.smsotp.AppDatabase;
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentUserBinding;
-import com.example.smsotp.entity.User;
+import com.example.smsotp.viewmodel.UserViewModel;
 
 public class UserFragment extends Fragment {
     public static final String ARG_ID = "userId";
     private static final String TAG = "UserFragment";
     private FragmentUserBinding binding;
-    private User user;
+    private UserViewModel viewModel;
     private int userId;
 
     @Override
@@ -41,24 +41,20 @@ public class UserFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentUserBinding.inflate(inflater, container, false);
+        viewModel = new ViewModelProvider(this).get(UserViewModel.class);
 
-        Toolbar toolbar = binding.include.toolbar;
+        final Toolbar toolbar = binding.include.toolbar;
         ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_24);
         toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
 
-        Thread fetchDataThread = new Thread(() -> {
-            user = AppDatabase.getInstance(getContext()).userDao().getById(userId);
-            requireActivity().runOnUiThread(() -> {
-                String text = getString(R.string.user_id) + ": " + user.id;
-                binding.idTextView.setText(text);
-                toolbar.setTitle(user.username);
-            });
+        viewModel.getUser(userId).observe(getViewLifecycleOwner(), user -> {
+            String text = getString(R.string.user_id) + ": " + user.id;
+            binding.idTextView.setText(text);
+            toolbar.setTitle(user.username);
         });
-        fetchDataThread.start();
 
         binding.editFab.setOnClickListener(v -> {
             Bundle passedArgs = new Bundle();
@@ -79,11 +75,12 @@ public class UserFragment extends Fragment {
         int id = item.getItemId();
 
         if (id == R.id.menu_delete) {
-            DialogFragment dialog = new DeleteDialog(user);
+            DialogFragment dialog = new DeleteDialog(viewModel);
             dialog.show(getParentFragmentManager(), "DeleteDialog");
+            return true;
         }
 
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     @Override
@@ -93,10 +90,10 @@ public class UserFragment extends Fragment {
     }
 
     public static class DeleteDialog extends DialogFragment {
-        private User user;
+        private UserViewModel viewModel;
 
-        public DeleteDialog(User user) {
-            this.user = user;
+        public DeleteDialog(UserViewModel viewModel) {
+            this.viewModel = viewModel;
         }
 
         @NonNull
@@ -110,12 +107,9 @@ public class UserFragment extends Fragment {
         }
 
         private void onPositive(DialogInterface dialog, int which) {
-            Thread deleteThread = new Thread(() -> {
-                AppDatabase.getInstance(getContext()).userDao().delete(user);
-                dialog.dismiss();
-                requireActivity().onBackPressed();
-            });
-            deleteThread.start();
+            viewModel.deleteUser();
+            dialog.dismiss();
+            requireActivity().onBackPressed();
         }
     }
 }

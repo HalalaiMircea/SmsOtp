@@ -28,8 +28,7 @@ public class StatusFragment extends Fragment {
     private FragmentStatusBinding binding;
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentStatusBinding.inflate(inflater, container, false);
 
         binding.serverSwitch.setChecked(WebService.isRunning());

@@ -4,9 +4,9 @@
     <string name="action_settings">Setări</string>
     <string name="service_desc">Servicu de fundal pentru serverul web care ascultă request-uri și le treatează</string>
     <string name="service_notifi_msg">Serverul Web rulează…</string>
-    <string name="status_tabitem">Stare</string>
-    <string name="users_tabitem">Utilizatori</string>
-    <string name="statistics_tabitem">Statistici</string>
+    <string name="status">Stare</string>
+    <string name="users">Utilizatori</string>
+    <string name="statistics">Statistici</string>
     <string name="db_icon_desc">Icoană bază de date</string>
     <string name="server_port_icon_desc">Icoană port server</string>
     <string name="wifi_ip_icon_desc">Icoană IP Wifi</string>

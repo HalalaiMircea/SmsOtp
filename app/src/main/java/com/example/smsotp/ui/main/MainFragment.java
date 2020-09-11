@@ -15,7 +15,6 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentMainBinding;
-import com.google.android.material.tabs.TabLayout;
 
 import static androidx.navigation.fragment.NavHostFragment.findNavController;
 
@@ -24,8 +23,7 @@ public class MainFragment extends Fragment {
     private FragmentMainBinding binding;
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentMainBinding.inflate(inflater, container, false);
 
         SectionsPagerAdapter adapter = new SectionsPagerAdapter(getActivity(), getChildFragmentManager());
@@ -34,15 +32,8 @@ public class MainFragment extends Fragment {
         viewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
-                switch (position) {
-                    case 0:
-                    case 2:
-                        binding.fab.hide();
-                        break;
-                    case 1:
-                        binding.fab.show();
-                        break;
-                }
+                if (position == 0) binding.fab.hide();
+                else binding.fab.show();
             }
         });
         binding.tabs.setupWithViewPager(viewPager);
@@ -58,14 +49,9 @@ public class MainFragment extends Fragment {
         binding = null;
     }
 
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-     * one of the tabs of {@link TabLayout}.
-     */
     public static class SectionsPagerAdapter extends FragmentPagerAdapter {
         @StringRes
-        private static final int[] TAB_TITLES = {R.string.status_tabitem, R.string.users_tabitem,
-                R.string.statistics_tabitem};
+        private static final int[] TAB_TITLES = {R.string.status, R.string.users, R.string.statistics};
         private final Context mContext;
         private Fragment[] fragments;
 

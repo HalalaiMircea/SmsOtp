@@ -1,5 +1,6 @@
 package com.example.smsotp.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -22,7 +23,7 @@ public interface UserDao {
     void delete(User user);
 
     @Query("SELECT * FROM user WHERE id = :id")
-    User getById(int id);
+    LiveData<User> getById(int id);
 
     @Query("SELECT id FROM user WHERE username = :username")
     int getIdByUsername(String username);
@@ -31,5 +32,5 @@ public interface UserDao {
     String getPasswordByUsername(String username);
 
     @Query("SELECT * FROM user")
-    List<User> getAll();
+    LiveData<List<User>> getAll();
 }

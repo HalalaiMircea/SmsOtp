@@ -16,19 +16,20 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
-import com.example.smsotp.AppDatabase;
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentAddUserBinding;
 import com.example.smsotp.entity.User;
+import com.example.smsotp.viewmodel.UserViewModel;
 
 import java.util.Objects;
 
 public class AddUserFragment extends Fragment {
     private static final String TAG = "AddUserFragment";
     private FragmentAddUserBinding binding;
+    private UserViewModel viewModel;
     private AppCompatActivity activity;
-    private User user;
     private Integer userId;
     private EditText userEditText;
     private EditText passEditText;
@@ -46,9 +47,9 @@ public class AddUserFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentAddUserBinding.inflate(inflater, container, false);
+        viewModel = new ViewModelProvider(this).get(UserViewModel.class);
 
         userEditText = Objects.requireNonNull(binding.userField.getEditText());
         passEditText = Objects.requireNonNull(binding.passField.getEditText());
@@ -61,14 +62,10 @@ public class AddUserFragment extends Fragment {
 
         // If we came here from action_editUser (if userId arg was provided)
         if (userId != null) {
-            Thread fetchThread = new Thread(() -> {
-                user = AppDatabase.getInstance(activity).userDao().getById(userId);
-                activity.runOnUiThread(() -> {
-                    userEditText.setText(user.username);
-                    passEditText.setText(user.password);
-                });
+            viewModel.getUser(userId).observe(getViewLifecycleOwner(), user -> {
+                userEditText.setText(user.username);
+                passEditText.setText(user.password);
             });
-            fetchThread.start();
         }
         return binding.getRoot();
     }
@@ -91,27 +88,24 @@ public class AddUserFragment extends Fragment {
             String userText = userEditText.getText().toString().trim();
             String passText = passEditText.getText().toString().trim();
             if (validateInputs(userText, passText)) {
-                Thread thread = new Thread(() -> {
+                new Thread(() -> {
                     try {
-                        // If we entered from main fragment add new user action
+                        // If we entered from main fragment through addNewUserAction
                         if (userId == null) {
-                            user = new User(userText, passText);
-                            AppDatabase.getInstance(activity).userDao().insert(user);
-                        } else {// Else we entered from existing user edit action
-                            user.username = userText;
-                            user.password = passText;
-                            AppDatabase.getInstance(activity).userDao().update(user);
+                            viewModel.insertUser(new User(userText, passText));
+                        } else {// Else we entered from existing userEditAction
+                            viewModel.updateUser(userText, passText);
                         }
                         activity.onBackPressed();
                     } catch (SQLiteConstraintException ex) {
                         Log.e(TAG, Objects.requireNonNull(ex.getMessage()));
                         activity.runOnUiThread(() -> binding.userField.setError("Username already taken!"));
                     }
-                });
-                thread.start();
+                }).start();
             }
+            return true;
         }
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     private boolean validateInputs(String userText, String passText) {

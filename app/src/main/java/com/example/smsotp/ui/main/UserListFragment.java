@@ -9,16 +9,18 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.smsotp.AppDatabase;
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentUserListBinding;
 import com.example.smsotp.databinding.UserListItemBinding;
 import com.example.smsotp.entity.User;
+import com.example.smsotp.viewmodel.MainViewModel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static androidx.navigation.Navigation.findNavController;
@@ -28,9 +30,9 @@ public class UserListFragment extends Fragment {
     private FragmentUserListBinding binding;
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentUserListBinding.inflate(inflater, container, false);
+        MainViewModel viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
         final Context context = getContext();
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
@@ -38,14 +40,10 @@ public class UserListFragment extends Fragment {
         else binding.list.setLayoutManager(new LinearLayoutManager(context));
         binding.list.setHasFixedSize(true);
 
-        Thread thread = new Thread(() -> {
-            List<User> result = AppDatabase.getInstance(context).userDao().getAll();
-            requireActivity().runOnUiThread(() -> {
-                Adapter adapter = new Adapter(result);
-                binding.list.setAdapter(adapter);
-            });
-        });
-        thread.start();
+        final Adapter adapter = new Adapter();
+        binding.list.setAdapter(adapter);
+        viewModel.getUsers().observe(getViewLifecycleOwner(), adapter::updateDataSet);
+
         return binding.getRoot();
     }
 
@@ -60,34 +58,35 @@ public class UserListFragment extends Fragment {
      */
     @SuppressWarnings("NullableProblems")
     public static class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
-
-        private final List<User> userDataList;
-
-        public Adapter(List<User> users) {
-            userDataList = users;
-        }
+        private List<User> users = new ArrayList<>();
 
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            return new ViewHolder(UserListItemBinding.inflate(LayoutInflater.from(parent.getContext()),
-                    parent, false));
+            return new ViewHolder(
+                    UserListItemBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false)
+            );
         }
 
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             // Here we set info for each individual item's info
-            holder.binding.userName.setText(userDataList.get(position).username);
-            holder.setUserId(userDataList.get(position).id);
+            holder.binding.userName.setText(users.get(position).username);
+            holder.userId = users.get(position).id;
         }
 
         @Override
         public int getItemCount() {
-            return userDataList.size();
+            return users.size();
         }
 
-        public static class ViewHolder extends RecyclerView.ViewHolder {
-            public UserListItemBinding binding;
-            private int userId;
+        public void updateDataSet(List<User> users) {
+            this.users = users;
+            notifyDataSetChanged();
+        }
+
+        private static class ViewHolder extends RecyclerView.ViewHolder {
+            public int userId;
+            private UserListItemBinding binding;
 
             public ViewHolder(UserListItemBinding binding) {
                 super(binding.getRoot());
@@ -100,10 +99,6 @@ public class UserListFragment extends Fragment {
                         findNavController(v).navigate(R.id.action_mainFragment_to_userFragment, args);
                     }
                 });
-            }
-
-            public void setUserId(int userId) {
-                this.userId = userId;
             }
 
             @Override

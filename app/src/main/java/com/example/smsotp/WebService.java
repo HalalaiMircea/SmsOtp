@@ -16,7 +16,6 @@ import android.telephony.SmsManager;
 import android.util.Log;
 import android.util.Patterns;
 
-import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.example.smsotp.entity.Command;
@@ -65,8 +64,12 @@ public class WebService extends Service {
         if (!webServer.wasStarted()) {
             isRunning = true;
             createNotification();
-            webServer.start();
-            Log.d(TAG, "Service started!");
+            try {
+                webServer.start();
+                Log.i(TAG, "Web Service started!");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else
             Log.w(TAG, "onStartCommand called more than once in the same service session!");
 
@@ -77,7 +80,7 @@ public class WebService extends Service {
     public void onDestroy() {
         isRunning = false;
         webServer.stop();
-        Log.d(TAG, "Service stopped!");
+        Log.i(TAG, "Web Service stopped!");
     }
 
     private void createNotification() {
@@ -105,7 +108,6 @@ public class WebService extends Service {
         startForeground(1, notification);
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -132,21 +134,13 @@ public class WebService extends Service {
             freemarkerCfg = new Configuration(new Version(2, 3, 30));
             freemarkerCfg.setDefaultEncoding(StandardCharsets.UTF_8.name());
             try {
-                String[] list = Objects.requireNonNull(this.context.getAssets().list(""));
+                String parentPath = "";
+                String[] list = Objects.requireNonNull(this.context.getAssets().list(parentPath));
                 List<String> htmlFiles = Arrays.stream(list)
                         .filter(s -> s.substring(s.lastIndexOf('.') + 1).equals("ftl"))
+                        .map(s -> parentPath + s)
                         .collect(Collectors.toList());
                 loadTemplates(htmlFiles);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void start() {
-            try {
-                super.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
-                Log.d(TAG, "Server running! Point your browsers to http://localhost:8080/");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -191,18 +185,17 @@ public class WebService extends Service {
                 String templateName = file.substring(0, file.lastIndexOf('.'));
                 templateLoader.putTemplate(templateName, baos.toByteArray());
             }
-
             freemarkerCfg.setTemplateLoader(templateLoader);
         }
 
         private Response handleIndexRequest(IHTTPSession session) {
             try {
                 Template template = freemarkerCfg.getTemplate("index");
-                Map<String, Object> templateData = new HashMap<>();
-                templateData.put("ip", session.getRemoteHostName());
+                Map<String, Object> dataModel = new HashMap<>();
+                dataModel.put("ip", session.getRemoteHostName());
 
                 StringWriter out = new StringWriter();
-                template.process(templateData, out);
+                template.process(dataModel, out);
                 return newFixedLengthResponse(out.toString());
             } catch (IOException | TemplateException e) {
                 return handleError(Response.Status.NOT_FOUND, session.getUri(), e, null);
