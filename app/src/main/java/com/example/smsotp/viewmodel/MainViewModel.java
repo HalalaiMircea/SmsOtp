@@ -13,17 +13,16 @@ import com.example.smsotp.entity.User;
 import java.util.List;
 
 public class MainViewModel extends AndroidViewModel {
-    private final UserDao userDao;
-    private LiveData<List<User>> usersLiveData;
+
+    private final LiveData<List<User>> usersLiveData;
 
     public MainViewModel(@NonNull Application application) {
         super(application);
-        userDao = AppDatabase.getInstance(application).userDao();
+        UserDao userDao = AppDatabase.getInstance(application).userDao();
+        usersLiveData = userDao.getAll();
     }
 
     public LiveData<List<User>> getUsers() {
-        if (usersLiveData == null)
-            usersLiveData = userDao.getAll();
         return usersLiveData;
     }
 }

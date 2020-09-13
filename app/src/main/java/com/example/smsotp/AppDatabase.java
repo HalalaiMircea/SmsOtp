@@ -18,7 +18,6 @@ import com.example.smsotp.entity.User;
 @Database(entities = {User.class, Command.class}, version = 1)
 @TypeConverters({TimestampConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
-
     private static final String TAG = "SMSOTP_DB";
     private static AppDatabase instance;
 

@@ -11,6 +11,7 @@ import com.example.smsotp.dao.UserDao;
 import com.example.smsotp.entity.User;
 
 public class UserViewModel extends AndroidViewModel {
+
     private final UserDao userDao;
     private LiveData<User> userLiveData;
 
@@ -38,7 +39,6 @@ public class UserViewModel extends AndroidViewModel {
     }
 
     public void deleteUser() {
-        Thread thread = new Thread(() -> userDao.delete(userLiveData.getValue()));
-        thread.start();
+        new Thread(() -> userDao.delete(userLiveData.getValue())).start();
     }
 }

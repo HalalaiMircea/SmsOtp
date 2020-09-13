@@ -13,11 +13,11 @@ public class User {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
-    @NonNull
-    public String username;
+    public @NonNull
+    String username;
 
-    @NonNull
-    public String password;
+    public @NonNull
+    String password;
 
     public User(@NonNull String username, @NonNull String password) {
         this.username = Objects.requireNonNull(username);
@@ -27,6 +27,6 @@ public class User {
     @NonNull
     @Override
     public String toString() {
-        return id + " " + username + " " + password;
+        return id + " " + username;
     }
 }

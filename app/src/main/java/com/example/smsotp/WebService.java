@@ -89,8 +89,7 @@ public class WebService extends Service {
         // Required for Oreo (API 26) and greater
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Foreground Service Channel",
-                    NotificationManager.IMPORTANCE_DEFAULT
-            );
+                    NotificationManager.IMPORTANCE_DEFAULT);
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(channel);
         }
