@@ -13,11 +13,11 @@ public class User {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
-    public @NonNull
-    String username;
+    @NonNull
+    public String username;
 
-    public @NonNull
-    String password;
+    @NonNull
+    public String password;
 
     public User(@NonNull String username, @NonNull String password) {
         this.username = Objects.requireNonNull(username);

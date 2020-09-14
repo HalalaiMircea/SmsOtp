@@ -19,26 +19,25 @@
         android:id="@+id/id_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
+        android:text="@string/user_id"
         android:textAlignment="center"
         android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/include"
-        app:layout_constraintVertical_bias="0.30"
-        tools:text="User ID:" />
+        app:layout_constraintTop_toBottomOf="@+id/include" />
 
     <TextView
-        android:id="@+id/name_text_view"
+        android:id="@+id/comm_count"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="@string/d_comm_executed"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/id_text_view"
-        app:layout_constraintVertical_bias="0.25"
-        tools:text="Username:" />
+        app:layout_constraintVertical_bias="0.22000003" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/edit_fab"
@@ -50,8 +49,18 @@
         android:focusable="true"
         android:src="@drawable/ic_baseline_edit_24"
         android:tint="#FFFFFF"
-        app:icon="@drawable/ic_baseline_edit_24"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/clear_comm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/clear_commands"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/comm_count"
+        app:layout_constraintVertical_bias="0.100000024" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

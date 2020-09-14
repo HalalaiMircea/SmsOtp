@@ -10,6 +10,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -29,36 +30,46 @@ public class UserFragment extends Fragment {
     private static final String TAG = "UserFragment";
     private FragmentUserBinding binding;
     private UserViewModel viewModel;
-    private int userId;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            userId = getArguments().getInt(ARG_ID);
-        }
+
+        assert getArguments() != null;
+        int userId = getArguments().getInt(ARG_ID);
+        viewModel = new ViewModelProvider(this).get(UserViewModel.class);
+        viewModel.init(userId);
+
         setHasOptionsMenu(true);
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentUserBinding.inflate(inflater, container, false);
-        viewModel = new ViewModelProvider(this).get(UserViewModel.class);
 
         final Toolbar toolbar = binding.include.toolbar;
         ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_24);
         toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
 
-        viewModel.getUser(userId).observe(getViewLifecycleOwner(), user -> {
+        viewModel.getUser().observe(getViewLifecycleOwner(), user -> {
             String text = getString(R.string.user_id) + ": " + user.id;
             binding.idTextView.setText(text);
             toolbar.setTitle(user.username);
         });
+        viewModel.getCommCount().observe(getViewLifecycleOwner(), count -> {
+            String text = getString(R.string.d_comm_executed, count);
+            binding.commCount.setText(text);
+        });
+
+        binding.clearComm.setOnClickListener(v -> {
+            viewModel.clearCommands();
+            Toast.makeText(getContext(), "Cleared commands for this user!", Toast.LENGTH_SHORT).show();
+        });
 
         binding.editFab.setOnClickListener(v -> {
             Bundle passedArgs = new Bundle();
-            passedArgs.putInt(ARG_ID, userId);
+            passedArgs.putInt(ARG_ID, viewModel.getUserId());
             Navigation.findNavController(v).navigate(R.id.action_editUser, passedArgs);
         });
         return binding.getRoot();

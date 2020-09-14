@@ -18,6 +18,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.smsotp.AppDatabase;
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentAddUserBinding;
 import com.example.smsotp.entity.User;
@@ -30,7 +31,6 @@ public class AddUserFragment extends Fragment {
     private FragmentAddUserBinding binding;
     private UserViewModel viewModel;
     private AppCompatActivity activity;
-    private Integer userId;
     private EditText userEditText;
     private EditText passEditText;
 
@@ -40,8 +40,11 @@ public class AddUserFragment extends Fragment {
         activity = (AppCompatActivity) requireActivity();
 
         Bundle args = requireArguments();
+        // We attach a view model to this Fragment instance when we come from editAction in nav_graph
         if (!args.isEmpty()) {
-            userId = args.getInt(UserFragment.ARG_ID);
+            int userId = args.getInt(UserFragment.ARG_ID);
+            viewModel = new ViewModelProvider(this).get(UserViewModel.class);
+            viewModel.init(userId);
         }
         setHasOptionsMenu(true);
     }
@@ -49,7 +52,6 @@ public class AddUserFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentAddUserBinding.inflate(inflater, container, false);
-        viewModel = new ViewModelProvider(this).get(UserViewModel.class);
 
         userEditText = Objects.requireNonNull(binding.userField.getEditText());
         passEditText = Objects.requireNonNull(binding.passField.getEditText());
@@ -60,9 +62,9 @@ public class AddUserFragment extends Fragment {
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
         toolbar.setNavigationOnClickListener(v -> activity.onBackPressed());
 
-        // If we came here from action_editUser (if userId arg was provided)
-        if (userId != null) {
-            viewModel.getUser(userId).observe(getViewLifecycleOwner(), user -> {
+        // If we came here from action_editUser (i.e. if viewModel is attached)
+        if (viewModel != null) {
+            viewModel.getUser().observe(getViewLifecycleOwner(), user -> {
                 userEditText.setText(user.username);
                 passEditText.setText(user.password);
             });
@@ -74,7 +76,7 @@ public class AddUserFragment extends Fragment {
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_add_user, menu);
         // We change item's title to make sense when updating user's data
-        int titleRes = userId != null ? R.string.save_changes : R.string.create_user;
+        int titleRes = viewModel != null ? R.string.save_changes : R.string.create_user;
         menu.findItem(R.id.save_user).setTitle(titleRes);
 
         super.onCreateOptionsMenu(menu, inflater);
@@ -91,8 +93,9 @@ public class AddUserFragment extends Fragment {
                 new Thread(() -> {
                     try {
                         // If we entered from main fragment through addNewUserAction
-                        if (userId == null) {
-                            viewModel.insertUser(new User(userText, passText));
+                        if (viewModel == null) {
+                            AppDatabase.getInstance(getContext()).userDao().insert(new User(userText,
+                                    passText));
                         } else {// Else we entered from existing userEditAction
                             viewModel.updateUser(userText, passText);
                         }

@@ -21,8 +21,8 @@ public class Command {
 
     public String jsonParams;
 
-    public @NonNull
-    Date executedDate;
+    @NonNull
+    public Date executedDate;
 
     public Command(int userId, String jsonParams, @NonNull Date executedDate) {
         this.userId = userId;

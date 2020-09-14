@@ -26,7 +26,7 @@ public class MainFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentMainBinding.inflate(inflater, container, false);
 
-        SectionsPagerAdapter adapter = new SectionsPagerAdapter(getActivity(), getChildFragmentManager());
+        SectionsPagerAdapter adapter = new SectionsPagerAdapter(getContext(), getChildFragmentManager());
         ViewPager viewPager = binding.viewPager;
         viewPager.setAdapter(adapter);
         viewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
@@ -49,7 +49,7 @@ public class MainFragment extends Fragment {
         binding = null;
     }
 
-    public static class SectionsPagerAdapter extends FragmentPagerAdapter {
+    private static class SectionsPagerAdapter extends FragmentPagerAdapter {
         @StringRes
         private static final int[] TAB_TITLES = {R.string.status, R.string.users, R.string.statistics};
         private final Context mContext;

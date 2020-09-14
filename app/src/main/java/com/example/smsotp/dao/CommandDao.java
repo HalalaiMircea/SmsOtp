@@ -1,5 +1,6 @@
 package com.example.smsotp.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -22,4 +23,10 @@ public interface CommandDao {
 
     @Query("SELECT * FROM command")
     List<Command> getAll();
+
+    @Query("SELECT COUNT(*) FROM command WHERE userId = :userId")
+    LiveData<Integer> countForUserId(int userId);
+
+    @Query("DELETE FROM command WHERE userId = :userId")
+    void deleteAllForUserId(int userId);
 }

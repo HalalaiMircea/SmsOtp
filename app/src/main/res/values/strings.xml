@@ -22,4 +22,6 @@
     <string name="delete_user">Delete User</string>
     <string name="del_user_confirm">Delete this user?</string>
     <string name="user_id">User ID</string>
+    <string name="d_comm_executed">%d commands executed</string>
+    <string name="clear_commands">Clear commands</string>
 </resources>

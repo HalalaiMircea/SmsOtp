@@ -22,4 +22,6 @@
     <string name="del_user_confirm">Ștergi acest utilizator?</string>
     <string name="service_notifi_title">Serviciu SMSOTP</string>
     <string name="user_id">ID Utilizator</string>
+    <string name="d_comm_executed">%d comenzi executate</string>
+    <string name="clear_commands">Șterge comenzi</string>
 </resources>
