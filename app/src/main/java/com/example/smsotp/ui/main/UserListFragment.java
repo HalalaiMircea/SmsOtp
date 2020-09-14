@@ -10,19 +10,18 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavDirections;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentUserListBinding;
 import com.example.smsotp.databinding.UserListItemBinding;
 import com.example.smsotp.entity.User;
 import com.example.smsotp.viewmodel.MainViewModel;
-
-import static androidx.navigation.Navigation.findNavController;
 
 public class UserListFragment extends Fragment {
     private static final String TAG = "UserListFragment";
@@ -101,9 +100,8 @@ public class UserListFragment extends Fragment {
 
         private void onClick(View v) {
             if (getAdapterPosition() != RecyclerView.NO_POSITION) {
-                Bundle args = new Bundle();
-                args.putInt(UserFragment.ARG_ID, userId);
-                findNavController(v).navigate(R.id.action_mainFragment_to_userFragment, args);
+                NavDirections action = MainFragmentDirections.actionMainFragmentToUserFragment(userId);
+                Navigation.findNavController(v).navigate(action);
             }
         }
     }

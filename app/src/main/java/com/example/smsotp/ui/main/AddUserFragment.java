@@ -31,21 +31,20 @@ public class AddUserFragment extends Fragment {
     private FragmentAddUserBinding binding;
     private UserViewModel viewModel;
     private AppCompatActivity activity;
-    private EditText userEditText;
-    private EditText passEditText;
+    private EditText userEditText, passEditText;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         activity = (AppCompatActivity) requireActivity();
-
-        Bundle args = requireArguments();
         // We attach a view model to this Fragment instance when we come from editAction in nav_graph
-        if (!args.isEmpty()) {
-            int userId = args.getInt(UserFragment.ARG_ID);
+        //(i.e. userId == -1)
+        int userId = AddUserFragmentArgs.fromBundle(requireArguments()).getUserId();
+        if (userId != -1) {
             viewModel = new ViewModelProvider(this).get(UserViewModel.class);
             viewModel.init(userId);
         }
+
         setHasOptionsMenu(true);
     }
 
@@ -94,8 +93,8 @@ public class AddUserFragment extends Fragment {
                     try {
                         // If we entered from main fragment through addNewUserAction
                         if (viewModel == null) {
-                            AppDatabase.getInstance(getContext()).userDao().insert(new User(userText,
-                                    passText));
+                            AppDatabase.getInstance(getContext())
+                                    .userDao().insert(new User(userText, passText));
                         } else {// Else we entered from existing userEditAction
                             viewModel.updateUser(userText, passText);
                         }

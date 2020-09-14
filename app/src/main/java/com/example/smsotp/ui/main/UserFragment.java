@@ -19,6 +19,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 
 import com.example.smsotp.R;
@@ -26,7 +27,6 @@ import com.example.smsotp.databinding.FragmentUserBinding;
 import com.example.smsotp.viewmodel.UserViewModel;
 
 public class UserFragment extends Fragment {
-    public static final String ARG_ID = "userId";
     private static final String TAG = "UserFragment";
     private FragmentUserBinding binding;
     private UserViewModel viewModel;
@@ -35,8 +35,7 @@ public class UserFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        assert getArguments() != null;
-        int userId = getArguments().getInt(ARG_ID);
+        int userId = UserFragmentArgs.fromBundle(requireArguments()).getUserId();
         viewModel = new ViewModelProvider(this).get(UserViewModel.class);
         viewModel.init(userId);
 
@@ -68,9 +67,8 @@ public class UserFragment extends Fragment {
         });
 
         binding.editFab.setOnClickListener(v -> {
-            Bundle passedArgs = new Bundle();
-            passedArgs.putInt(ARG_ID, viewModel.getUserId());
-            Navigation.findNavController(v).navigate(R.id.action_editUser, passedArgs);
+            NavDirections action = UserFragmentDirections.actionEditUser(viewModel.getUserId());
+            Navigation.findNavController(v).navigate(action);
         });
         return binding.getRoot();
     }

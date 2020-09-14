@@ -11,12 +11,12 @@ import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.navigation.NavDirections;
+import androidx.navigation.Navigation;
 import androidx.viewpager.widget.ViewPager;
 
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentMainBinding;
-
-import static androidx.navigation.fragment.NavHostFragment.findNavController;
 
 public class MainFragment extends Fragment {
     private static final String TAG = "SMSOTP_MainFragment";
@@ -37,8 +37,10 @@ public class MainFragment extends Fragment {
             }
         });
         binding.tabs.setupWithViewPager(viewPager);
-        binding.fab.setOnClickListener(v -> findNavController(this)
-                .navigate(R.id.action_mainFragment_to_addUserFragment));
+        binding.fab.setOnClickListener(v -> {
+            NavDirections action = MainFragmentDirections.actionMainFragmentToAddUserFragment();
+            Navigation.findNavController(v).navigate(action);
+        });
         return binding.getRoot();
     }
 
