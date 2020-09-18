@@ -49,6 +49,7 @@ public class WebService extends Service {
     private static final String TAG = "SMSOTP_WebService";
     private static boolean isRunning = false;
     private WebServer webServer;
+    private Notification notification;
 
     public static boolean isRunning() {
         return isRunning;
@@ -57,13 +58,14 @@ public class WebService extends Service {
     @Override
     public void onCreate() {
         webServer = new WebServer(this, 8080);
+        createNotification();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (!webServer.wasStarted()) {
             isRunning = true;
-            createNotification();
+            startForeground(1, notification);
             try {
                 webServer.start();
                 Log.i(TAG, "Web Service started!");
@@ -97,14 +99,12 @@ public class WebService extends Service {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pi = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+        notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(getText(R.string.service_notifi_title))
                 .setContentText(getText(R.string.service_notifi_msg))
                 .setSmallIcon(R.drawable.ic_baseline_web_24)
                 .setContentIntent(pi)
                 .build();
-
-        startForeground(1, notification);
     }
 
     @Override
@@ -252,71 +252,73 @@ public class WebService extends Service {
                 return handleError(Response.Status.METHOD_NOT_ALLOWED, session.getUri(), null,
                         "Only POST requests are allowed!");
             }
-            // We check if the request misses any credential
-            if (!isParamNonBlank(params.get(Keys.USERNAME)) || !isParamNonBlank(params.get(Keys.PASSWORD))) {
-                return handleError(Response.Status.UNAUTHORIZED, session.getUri(), null,
+            List<String> usernameParam = params.get(Keys.USERNAME);
+            List<String> passwordParam = params.get(Keys.PASSWORD);
+            try {
+                // We check if the request misses any credential
+                validateParam(usernameParam);
+                validateParam(passwordParam);
+                // If returned password string is null, username doesn't exist
+                String password = database.userDao().getPasswordByUsername(usernameParam.get(0));
+                if (password == null || !password.equals(passwordParam.get(0)))
+                    return handleError(Response.Status.UNAUTHORIZED, session.getUri(), null,
+                            "Incorrect username and/or password!");
+            } catch (IllegalArgumentException e) {
+                return handleError(Response.Status.UNAUTHORIZED, session.getUri(), e,
                         "Missing username or password parameters!");
             }
 
-            // If returned password string is null, username doesn't exist
-            String password = database.userDao().getPasswordByUsername(params.get(Keys.USERNAME).get(0));
-            if (password == null || !password.equals(params.get(Keys.PASSWORD).get(0)))
-                return handleError(Response.Status.UNAUTHORIZED, session.getUri(), null,
-                        "Incorrect username and/or password!");
-
             Response response;
-            if (isParamNonBlank(params.get(Keys.MESSAGE)) && isPhonesValid(params.get(Keys.PHONES))) {
-                try {
-                    JSONObject jsonParams = sendManySms(params.get(Keys.PHONES),
-                            params.get(Keys.MESSAGE).get(0));
-                    int userId = database.userDao().getIdByUsername(params.get(Keys.USERNAME).get(0));
-                    int commId = (int) database.commandDao().insert(new Command(userId, jsonParams.toString(),
-                            new Date()));
+            try {
+                validateParam(params.get(Keys.MESSAGE));
+                validatePhones(params.get(Keys.PHONES));
 
-                    JSONObject jsonResponse = new JSONObject();
-                    jsonResponse.put("commandId", commId)
-                            .put("userId", userId)
-                            .put(Keys.MESSAGE, jsonParams.getString(Keys.MESSAGE))
-                            .put(Keys.RESULTS, jsonParams.get(Keys.RESULTS));
+                JSONObject jsonParams = sendManySms(params.get(Keys.PHONES), params.get(Keys.MESSAGE).get(0));
+                int userId = database.userDao().getIdByUsername(usernameParam.get(0));
+                int commId = (int) database.commandDao().insert(new Command(userId, jsonParams.toString(),
+                        new Date()));
 
-                    boolean useXML = Objects.nonNull(params.get("format")) &&
-                            params.get("format").get(0).toLowerCase().trim().equals("xml");
+                JSONObject jsonResponse = new JSONObject();
+                jsonResponse.put("commandId", commId)
+                        .put("userId", userId)
+                        .put(Keys.MESSAGE, jsonParams.getString(Keys.MESSAGE))
+                        .put(Keys.RESULTS, jsonParams.get(Keys.RESULTS));
 
-                    response = newFixedLengthResponse(Response.Status.OK,
-                            mimeTypes().get(useXML ? "xml" : "json"),
-                            useXML ? XML.toString(jsonResponse, "root") : jsonResponse.toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    response = handleError(Response.Status.INTERNAL_ERROR, session.getUri(), e,
-                            "Could not convert params to JSON\n" + e.getMessage());
-                }
-            } else response = handleError(Response.Status.BAD_REQUEST, session.getUri(), null,
-                    "Missing or invalid message and/or phones parameters!");
+                boolean useXML = Objects.nonNull(params.get("format")) &&
+                        params.get("format").get(0).toLowerCase().trim().equals("xml");
 
+                response = newFixedLengthResponse(Response.Status.OK,
+                        mimeTypes().get(useXML ? "xml" : "json"),
+                        useXML ? XML.toString(jsonResponse, "root") : jsonResponse.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+                response = handleError(Response.Status.INTERNAL_ERROR, session.getUri(), e,
+                        "Could not convert params to JSON\n" + e.getMessage());
+            } catch (IllegalArgumentException e) {
+                response = handleError(Response.Status.BAD_REQUEST, session.getUri(), e,
+                        "Missing or invalid message and/or phones parameters!");
+            }
             return response;
         }
 
-        private boolean isPhonesValid(List<String> phones) {
-            if (isParamNonBlank(phones)) {
-                for (String phone : phones) {
-                    if (!Patterns.PHONE.matcher(phone).matches())
-                        return false;
-                }
-                return true;
+        private void validatePhones(List<String> phones) throws IllegalArgumentException {
+            validateParam(phones);
+            for (String phone : phones) {
+                if (!Patterns.PHONE.matcher(phone).matches())
+                    throw new IllegalArgumentException("One or multiple phone numbers are invalid");
             }
-            return false;
         }
 
-        private boolean isParamNonBlank(List<String> paramValue) {
+        private void validateParam(List<String> paramValue) throws IllegalArgumentException {
             // If request query key for this value is missing
-            if (paramValue == null) return false;
+            if (paramValue == null || paramValue.isEmpty())
+                throw new IllegalArgumentException("Request param is either null or empty");
 
             // If any element is invalid
             for (String value : paramValue) {
                 if (value == null || value.trim().isEmpty())
-                    return false;
+                    throw new IllegalArgumentException("A parameter is blank");
             }
-            return !paramValue.isEmpty();
         }
 
         /**
@@ -338,50 +340,34 @@ public class WebService extends Service {
             for (int i = 0; i < phones.size(); i++)
                 sentPIs[i] = PendingIntent.getBroadcast(context, 0, new Intent(SENT_IDS[i]), 0);
 
-            final SmsResultType[] resultTypes = new SmsResultType[phones.size()];
-            BroadcastReceiver sentReceiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    String action = Objects.requireNonNull(intent.getAction());
-                    int phoneIdx = Integer.parseInt(action.substring(action.lastIndexOf('#') + 1));
-                    resultTypes[phoneIdx] = SmsResultType.lookup(getResultCode());
-                }
-            };
             IntentFilter intentFilter = new IntentFilter();
             for (String action : SENT_IDS) intentFilter.addAction(action);
-            context.registerReceiver(sentReceiver, intentFilter);
+            SmsSuccessReceiver receiver = new SmsSuccessReceiver(phones.size());
+            context.registerReceiver(receiver, intentFilter);
 
-            // It may throw exception if our app doesn't have SEND_SMS permission
-            try {
-                SmsManager smsManager = SmsManager.getDefault();
-                for (int i = 0; i < phones.size(); i++)
-                    smsManager.sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
-
-                // Wait until we have all results
-                for (int i = 0; i < phones.size(); i++) {
-                    while (resultTypes[i] == null)
-                        Thread.sleep(100);
+            SmsManager smsManager = SmsManager.getDefault();
+            for (int i = 0; i < phones.size(); i++)
+                smsManager.sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
+            // Wait until we have all results
+            while (receiver.resultTypes.contains(null)) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-
-                StringBuilder sb = new StringBuilder("SMS_SENT Results: ");
-                for (int i = 0; i < phones.size(); i++)
-                    sb.append(resultTypes[i].getCode()).append(" ").append(resultTypes[i]).append('\n');
-
-                Log.d(TAG, sb.toString());
-            } catch (Exception ex) {
-                ex.printStackTrace();
             }
-            context.unregisterReceiver(sentReceiver);   // Prevent memory leak
+
+            Log.d(TAG, "SENT_SMS Result: " + receiver.resultTypes);
+            context.unregisterReceiver(receiver);   // Prevent memory leak
 
             JSONObject json = new JSONObject();
             json.put(Keys.MESSAGE, msg);
             for (int i = 0; i < phones.size(); i++) {
                 JSONObject phoneStatusPair = new JSONObject();
                 phoneStatusPair.put("phone", phones.get(i))
-                        .put("status", resultTypes[i]);
+                        .put("status", receiver.resultTypes.get(i));
                 json.accumulate(Keys.RESULTS, phoneStatusPair);
             }
-
             return json;
         }
 
@@ -412,12 +398,27 @@ public class WebService extends Service {
         }
 
         private static class Keys {
-
             static final String PHONES = "phones";
             static final String MESSAGE = "message";
             static final String USERNAME = "username";
             static final String PASSWORD = "password";
             static final String RESULTS = "results";
+        }
+
+        private static class SmsSuccessReceiver extends BroadcastReceiver {
+            List<SmsResultType> resultTypes;
+
+            public SmsSuccessReceiver(int listSize) {
+                super();
+                resultTypes = Arrays.asList(new SmsResultType[listSize]);
+            }
+
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = Objects.requireNonNull(intent.getAction());
+                int phoneIdx = Integer.parseInt(action.substring(action.lastIndexOf('#') + 1));
+                resultTypes.set(phoneIdx, SmsResultType.lookup(getResultCode()));
+            }
         }
     }
 }
