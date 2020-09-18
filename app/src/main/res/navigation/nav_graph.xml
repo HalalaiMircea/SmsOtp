@@ -13,8 +13,8 @@
         <action
             android:id="@+id/action_mainFragment_to_addUserFragment"
             app:destination="@id/addUserFragment"
-            app:enterAnim="@anim/fragment_slide_up"
-            app:popExitAnim="@anim/fragment_slide_down">
+            app:enterAnim="@anim/frag_translucent_open_enter"
+            app:popExitAnim="@anim/frag_translucent_close_exit">
             <argument
                 android:name="userId"
                 android:defaultValue="-1" />
@@ -45,7 +45,7 @@
         <action
             android:id="@+id/action_editUser"
             app:destination="@id/addUserFragment"
-            app:enterAnim="@anim/fragment_slide_up"
-            app:popExitAnim="@anim/fragment_slide_down" />
+            app:enterAnim="@anim/frag_translucent_open_enter"
+            app:popExitAnim="@anim/frag_translucent_close_exit" />
     </fragment>
 </navigation>

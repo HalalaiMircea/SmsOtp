@@ -19,12 +19,12 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.NavDirections;
-import androidx.navigation.Navigation;
 
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentUserBinding;
 import com.example.smsotp.viewmodel.UserViewModel;
+
+import static androidx.navigation.Navigation.findNavController;
 
 public class UserFragment extends Fragment {
     private static final String TAG = "UserFragment";
@@ -49,7 +49,7 @@ public class UserFragment extends Fragment {
         final Toolbar toolbar = binding.include.toolbar;
         ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_24);
-        toolbar.setNavigationOnClickListener(v -> requireActivity().onBackPressed());
+        toolbar.setNavigationOnClickListener(v -> findNavController(v).navigateUp());
 
         viewModel.getUser().observe(getViewLifecycleOwner(), user -> {
             String text = getString(R.string.user_id) + ": " + user.id;
@@ -66,10 +66,8 @@ public class UserFragment extends Fragment {
             Toast.makeText(getContext(), "Cleared commands for this user!", Toast.LENGTH_SHORT).show();
         });
 
-        binding.editFab.setOnClickListener(v -> {
-            NavDirections action = UserFragmentDirections.actionEditUser(viewModel.getUserId());
-            Navigation.findNavController(v).navigate(action);
-        });
+        binding.editFab.setOnClickListener(v -> findNavController(v).navigate(UserFragmentDirections
+                .actionEditUser(viewModel.getUserId())));
         return binding.getRoot();
     }
 

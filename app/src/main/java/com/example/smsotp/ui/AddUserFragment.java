@@ -26,6 +26,8 @@ import com.example.smsotp.viewmodel.UserViewModel;
 
 import java.util.Objects;
 
+import static androidx.navigation.Navigation.findNavController;
+
 public class AddUserFragment extends Fragment {
     private static final String TAG = "AddUserFragment";
     private FragmentAddUserBinding binding;
@@ -59,7 +61,7 @@ public class AddUserFragment extends Fragment {
         activity.setSupportActionBar(toolbar);
         toolbar.setTitle("");
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
-        toolbar.setNavigationOnClickListener(v -> activity.onBackPressed());
+        toolbar.setNavigationOnClickListener(v -> findNavController(v).navigateUp());
 
         // If we came here from action_editUser (i.e. if viewModel is attached)
         if (viewModel != null) {
