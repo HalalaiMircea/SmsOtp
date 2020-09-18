@@ -1,4 +1,4 @@
-package com.example.smsotp.ui.main;
+package com.example.smsotp.ui;
 
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;

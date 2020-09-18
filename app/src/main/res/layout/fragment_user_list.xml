@@ -7,5 +7,5 @@
     android:layout_height="match_parent"
     android:clipToPadding="false"
     android:padding="4dp"
-    tools:context=".ui.main.UserListFragment"
+    tools:context=".ui.UserListFragment"
     tools:listitem="@layout/user_list_item" />

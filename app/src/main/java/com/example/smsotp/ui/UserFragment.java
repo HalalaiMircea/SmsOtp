@@ -1,4 +1,4 @@
-package com.example.smsotp.ui.main;
+package com.example.smsotp.ui;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

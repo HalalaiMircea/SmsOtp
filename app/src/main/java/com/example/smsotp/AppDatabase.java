@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.TypeConverter;
 import androidx.room.TypeConverters;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
@@ -15,8 +16,10 @@ import com.example.smsotp.dao.UserDao;
 import com.example.smsotp.entity.Command;
 import com.example.smsotp.entity.User;
 
+import java.util.Date;
+
 @Database(entities = {User.class, Command.class}, version = 1)
-@TypeConverters({TimestampConverter.class})
+@TypeConverters({AppDatabase.Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
     private static final String TAG = "SMSOTP_DB";
     private static AppDatabase instance;
@@ -48,17 +51,19 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     }
 
-    // On some emulators with older Android versions, SQLite logs errors when starting the app if DB wasn't
-    // properly closed the last time
-    @Deprecated
-    public static synchronized void closeInstance() {
-        if (instance != null) {
-            instance.close();
-            instance = null;
-        }
-    }
-
     public abstract UserDao userDao();
 
     public abstract CommandDao commandDao();
+
+    public static class Converters {
+        @TypeConverter
+        public static Date fromTimestamp(long value) {
+            return new Date(value);
+        }
+
+        @TypeConverter
+        public static long dateToTimestamp(Date date) {
+            return date.getTime();
+        }
+    }
 }

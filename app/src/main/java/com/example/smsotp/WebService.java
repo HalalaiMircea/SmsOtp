@@ -20,7 +20,6 @@ import androidx.core.app.NotificationCompat;
 
 import com.example.smsotp.entity.Command;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
 
@@ -49,7 +48,6 @@ public class WebService extends Service {
     private static final String TAG = "SMSOTP_WebService";
     private static boolean isRunning = false;
     private WebServer webServer;
-    private Notification notification;
 
     public static boolean isRunning() {
         return isRunning;
@@ -58,9 +56,8 @@ public class WebService extends Service {
     @Override
     public void onCreate() {
         webServer = new WebServer(this, 8080);
-        createNotification();
         isRunning = true;
-        startForeground(1, notification);
+        startForeground(1, createNotification());
         try {
             webServer.start();
             Log.i(TAG, "Web Service started!");
@@ -76,7 +73,7 @@ public class WebService extends Service {
         Log.i(TAG, "Web Service stopped!");
     }
 
-    private void createNotification() {
+    private Notification createNotification() {
         final String CHANNEL_ID = "ForegroundServiceChannel";
 
         // Required for Oreo (API 26) and greater
@@ -90,7 +87,7 @@ public class WebService extends Service {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pi = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
-        notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(getText(R.string.service_notifi_title))
                 .setContentText(getText(R.string.service_notifi_msg))
                 .setSmallIcon(R.drawable.ic_baseline_web_24)
@@ -116,7 +113,7 @@ public class WebService extends Service {
         private AppDatabase database;
         private Configuration freemarkerCfg;
 
-        public WebServer(Context context, int port) {
+        private WebServer(Context context, int port) {
             super(port);
             WebServer.port = port;
             this.context = context;
@@ -251,8 +248,7 @@ public class WebService extends Service {
             List<String> passwordParam = params.get(Keys.PASSWORD);
             try {
                 // We check if the request misses any credential
-                validateParam(usernameParam);
-                validateParam(passwordParam);
+                validateParams(usernameParam, passwordParam);
                 // If returned password string is null, username doesn't exist
                 String password = database.userDao().getPasswordByUsername(usernameParam.get(0));
                 if (password == null || !password.equals(passwordParam.get(0)))
@@ -265,7 +261,7 @@ public class WebService extends Service {
 
             Response response;
             try {
-                validateParam(params.get(Keys.MESSAGE));
+                validateParams(params.get(Keys.MESSAGE));
                 validatePhones(params.get(Keys.PHONES));
 
                 JSONObject jsonParams = sendManySms(params.get(Keys.PHONES), params.get(Keys.MESSAGE).get(0));
@@ -285,34 +281,36 @@ public class WebService extends Service {
                 response = newFixedLengthResponse(Response.Status.OK,
                         mimeTypes().get(useXML ? "xml" : "json"),
                         useXML ? XML.toString(jsonResponse, "root") : jsonResponse.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-                response = handleError(Response.Status.INTERNAL_ERROR, session.getUri(), e,
-                        "Could not convert params to JSON\n" + e.getMessage());
             } catch (IllegalArgumentException e) {
                 response = handleError(Response.Status.BAD_REQUEST, session.getUri(), e,
                         "Missing or invalid message and/or phones parameters!");
+            } catch (Exception e) {
+                e.printStackTrace();
+                response = handleError(Response.Status.INTERNAL_ERROR, session.getUri(), e, null);
             }
             return response;
         }
 
         private void validatePhones(List<String> phones) throws IllegalArgumentException {
-            validateParam(phones);
+            validateParams(phones);
             for (String phone : phones) {
                 if (!Patterns.PHONE.matcher(phone).matches())
                     throw new IllegalArgumentException("One or multiple phone numbers are invalid");
             }
         }
 
-        private void validateParam(List<String> paramValue) throws IllegalArgumentException {
+        @SafeVarargs
+        private final void validateParams(List<String>... paramValues) throws IllegalArgumentException {
             // If request query key for this value is missing
-            if (paramValue == null || paramValue.isEmpty())
-                throw new IllegalArgumentException("Request param is either null or empty");
+            for (List<String> paramValue : paramValues) {
+                if (paramValue == null || paramValue.isEmpty())
+                    throw new IllegalArgumentException("Request param is either null or empty");
 
-            // If any element is invalid
-            for (String value : paramValue) {
-                if (value == null || value.trim().isEmpty())
-                    throw new IllegalArgumentException("A parameter is blank");
+                // If any element is invalid
+                for (String value : paramValue) {
+                    if (value == null || value.trim().isEmpty())
+                        throw new IllegalArgumentException("A parameter is blank");
+                }
             }
         }
 
@@ -323,9 +321,9 @@ public class WebService extends Service {
          * @param phones List of String phone numbers
          * @param msg    Text message to send
          * @return JSON parameters to insert into DB and append to response JSON
-         * @throws JSONException if JSON parsing failed
+         * @throws Exception if JSON parsing failed or thread is interrupted
          */
-        private JSONObject sendManySms(List<String> phones, String msg) throws JSONException {
+        private JSONObject sendManySms(List<String> phones, String msg) throws Exception {
             String packageName = Objects.requireNonNull(getClass().getPackage()).getName()
                     + ".SMS_SENT" + Thread.currentThread().getId() + "#";
             final String[] SENT_IDS = new String[phones.size()];
@@ -337,7 +335,7 @@ public class WebService extends Service {
 
             IntentFilter intentFilter = new IntentFilter();
             for (String action : SENT_IDS) intentFilter.addAction(action);
-            SmsSuccessReceiver receiver = new SmsSuccessReceiver(phones.size());
+            SentSmsReceiver receiver = new SentSmsReceiver(phones.size());
             context.registerReceiver(receiver, intentFilter);
 
             SmsManager smsManager = SmsManager.getDefault();
@@ -345,11 +343,7 @@ public class WebService extends Service {
                 smsManager.sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
             // Wait until we have all results
             while (receiver.resultTypes.contains(null)) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                Thread.sleep(100);
             }
 
             Log.d(TAG, "SENT_SMS Result: " + receiver.resultTypes);
@@ -400,10 +394,10 @@ public class WebService extends Service {
             static final String RESULTS = "results";
         }
 
-        private static class SmsSuccessReceiver extends BroadcastReceiver {
+        private static class SentSmsReceiver extends BroadcastReceiver {
             List<SmsResultType> resultTypes;
 
-            public SmsSuccessReceiver(int listSize) {
+            public SentSmsReceiver(int listSize) {
                 super();
                 resultTypes = Arrays.asList(new SmsResultType[listSize]);
             }
