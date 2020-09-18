@@ -59,23 +59,14 @@ public class WebService extends Service {
     public void onCreate() {
         webServer = new WebServer(this, 8080);
         createNotification();
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (!webServer.wasStarted()) {
-            isRunning = true;
-            startForeground(1, notification);
-            try {
-                webServer.start();
-                Log.i(TAG, "Web Service started!");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else
-            Log.w(TAG, "onStartCommand called more than once in the same service session!");
-
-        return super.onStartCommand(intent, flags, startId);
+        isRunning = true;
+        startForeground(1, notification);
+        try {
+            webServer.start();
+            Log.i(TAG, "Web Service started!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -120,6 +111,7 @@ public class WebService extends Service {
             mimeTypes().put("ftl", "text/html");
         }
 
+        private final Thread loaderThread;
         private Context context;
         private AppDatabase database;
         private Configuration freemarkerCfg;
@@ -130,34 +122,37 @@ public class WebService extends Service {
             this.context = context;
             this.database = AppDatabase.getInstance(context);
 
-            freemarkerCfg = new Configuration(new Version(2, 3, 30));
-            freemarkerCfg.setDefaultEncoding(StandardCharsets.UTF_8.name());
-            try {
-                String parentPath = "";
-                String[] list = Objects.requireNonNull(this.context.getAssets().list(parentPath));
-                List<String> htmlFiles = Arrays.stream(list)
-                        .filter(s -> s.substring(s.lastIndexOf('.') + 1).equals("ftl"))
-                        .map(s -> parentPath + s)
-                        .collect(Collectors.toList());
-                loadTemplates(htmlFiles);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            loaderThread = new Thread(() -> {
+                freemarkerCfg = new Configuration(new Version(2, 3, 30));
+                freemarkerCfg.setDefaultEncoding(StandardCharsets.UTF_8.name());
+                try {
+                    String parentPath = "";
+                    String[] list = Objects.requireNonNull(this.context.getAssets().list(parentPath));
+                    List<String> htmlFiles = Arrays.stream(list)
+                            .filter(s -> s.substring(s.lastIndexOf('.') + 1).equals("ftl"))
+                            .map(s -> parentPath + s)
+                            .collect(Collectors.toList());
+                    loadTemplates(htmlFiles);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            loaderThread.start();
         }
 
         @Override
         public Response serve(IHTTPSession session) {
-            Map<String, String> files = new HashMap<>();
-            Method method = session.getMethod();
-            if (Method.PUT == method || Method.POST == method) {
-                try {
-                    session.parseBody(files);
-                } catch (IOException ioe) {
-                    return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
-                            "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
-                } catch (ResponseException re) {
-                    return newFixedLengthResponse(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
-                }
+            try {
+                Map<String, String> files = new HashMap<>();
+                Method method = session.getMethod();
+                if (Method.PUT == method || Method.POST == method) session.parseBody(files);
+                // Wait for the templates to load
+                loaderThread.join();
+            } catch (IOException | InterruptedException ex) {
+                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
+                        "SERVER INTERNAL ERROR: " + ex.getMessage());
+            } catch (ResponseException re) {
+                return newFixedLengthResponse(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
             }
 
             switch (session.getUri()) {
