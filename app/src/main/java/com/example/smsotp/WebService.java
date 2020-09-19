@@ -17,6 +17,8 @@ import android.util.Log;
 import android.util.Patterns;
 
 import androidx.core.app.NotificationCompat;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import com.example.smsotp.entity.Command;
 
@@ -46,17 +48,23 @@ import freemarker.template.Version;
 
 public class WebService extends Service {
     private static final String TAG = "SMSOTP_WebService";
-    private static boolean isRunning = false;
+    private static MutableLiveData<Boolean> isRunning;
+
+    static {
+        isRunning = new MutableLiveData<>();
+        isRunning.setValue(false);
+    }
+
     private WebServer webServer;
 
-    public static boolean isRunning() {
+    public static LiveData<Boolean> getIsRunning() {
         return isRunning;
     }
 
     @Override
     public void onCreate() {
+        isRunning.setValue(true);
         webServer = new WebServer(this, 8080);
-        isRunning = true;
         startForeground(1, createNotification());
         try {
             webServer.start();
@@ -68,7 +76,7 @@ public class WebService extends Service {
 
     @Override
     public void onDestroy() {
-        isRunning = false;
+        isRunning.setValue(false);
         webServer.stop();
         Log.i(TAG, "Web Service stopped!");
     }

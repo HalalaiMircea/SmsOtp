@@ -10,7 +10,6 @@
     <string name="db_icon_desc">Icoană bază de date</string>
     <string name="server_port_icon_desc">Icoană port server</string>
     <string name="wifi_ip_icon_desc">Icoană IP Wifi</string>
-    <string name="server_switch_text">Pornește Server Web</string>
     <string name="username">Nume utilizator</string>
     <string name="password">Parolă</string>
     <string name="phone_number">Număr telefon</string>
@@ -24,4 +23,5 @@
     <string name="user_id">ID Utilizator</string>
     <string name="d_comm_executed">%d comenzi executate</string>
     <string name="clear_commands">Șterge comenzi</string>
+    <string name="web_server">Server Web</string>
 </resources>

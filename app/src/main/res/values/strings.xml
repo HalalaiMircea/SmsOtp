@@ -11,7 +11,6 @@
     <string name="db_icon_desc">Database Icon</string>
     <string name="server_port_icon_desc">Server port icon</string>
     <string name="wifi_ip_icon_desc">Wifi IP icon</string>
-    <string name="server_switch_text">Enable Web server</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="phone_number">Phone Number</string>
@@ -24,4 +23,5 @@
     <string name="user_id">User ID</string>
     <string name="d_comm_executed">%d commands executed</string>
     <string name="clear_commands">Clear commands</string>
+    <string name="web_server">Web Server</string>
 </resources>
