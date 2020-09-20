@@ -17,7 +17,6 @@ import android.util.Log;
 import android.util.Patterns;
 
 import androidx.core.app.NotificationCompat;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.smsotp.entity.Command;
@@ -48,30 +47,23 @@ import freemarker.template.Version;
 
 public class WebService extends Service {
     private static final String TAG = "SMSOTP_WebService";
-    private static MutableLiveData<Boolean> isRunning;
-
-    static {
-        isRunning = new MutableLiveData<>();
-        isRunning.setValue(false);
-    }
-
+    public static MutableLiveData<Boolean> isRunning = new MutableLiveData<>();
     private WebServer webServer;
-
-    public static LiveData<Boolean> getIsRunning() {
-        return isRunning;
-    }
 
     @Override
     public void onCreate() {
         isRunning.setValue(true);
         startForeground(1, createNotification());
-        webServer = new WebServer(this, 8080);
-        try {
-            webServer.start();
-            Log.i(TAG, "Web Service started!");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // We instantiate web server on background thread so we don't block UI thread
+        new Thread(() -> {
+            webServer = new WebServer(this, 8080);
+            try {
+                webServer.start();
+                Log.i(TAG, "Web Service started!");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     @Override
@@ -116,7 +108,6 @@ public class WebService extends Service {
             mimeTypes().put("ftl", "text/html");
         }
 
-        private final Thread loaderThread;
         private Context context;
         private AppDatabase database;
         private Configuration freemarkerCfg;
@@ -127,39 +118,35 @@ public class WebService extends Service {
             this.context = context;
             this.database = AppDatabase.getInstance(context);
 
-            loaderThread = new Thread(() -> {
-                freemarkerCfg = new Configuration(new Version(2, 3, 30));
-                freemarkerCfg.setDefaultEncoding(StandardCharsets.UTF_8.name());
-                try {
-                    String parentPath = "";
-                    String[] list = Objects.requireNonNull(this.context.getAssets().list(parentPath));
-                    List<String> htmlFiles = Arrays.stream(list)
-                            .filter(s -> s.substring(s.lastIndexOf('.') + 1).equals("ftl"))
-                            .map(s -> parentPath + s)
-                            .collect(Collectors.toList());
-                    loadTemplates(htmlFiles);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-            loaderThread.start();
+            freemarkerCfg = new Configuration(new Version(2, 3, 30));
+            freemarkerCfg.setDefaultEncoding(StandardCharsets.UTF_8.name());
+            try {
+                String parentPath = "";
+                String[] list = Objects.requireNonNull(this.context.getAssets().list(parentPath));
+                List<String> htmlFiles = Arrays.stream(list)
+                        .filter(s -> s.substring(s.lastIndexOf('.') + 1).equals("ftl"))
+                        .map(s -> parentPath + s)
+                        .collect(Collectors.toList());
+                loadTemplates(htmlFiles);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
         public Response serve(IHTTPSession session) {
-            try {
-                Map<String, String> files = new HashMap<>();
-                Method method = session.getMethod();
-                if (Method.PUT == method || Method.POST == method) session.parseBody(files);
-                // Wait for the templates to load
-                loaderThread.join();
-            } catch (IOException | InterruptedException ex) {
-                return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
-                        "SERVER INTERNAL ERROR: " + ex.getMessage());
-            } catch (ResponseException re) {
-                return newFixedLengthResponse(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
+            Map<String, String> files = new HashMap<>();
+            Method method = session.getMethod();
+            if (Method.PUT == method || Method.POST == method) {
+                try {
+                    session.parseBody(files);
+                } catch (IOException ex) {
+                    return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
+                            "SERVER INTERNAL ERROR: " + ex.getMessage());
+                } catch (ResponseException re) {
+                    return newFixedLengthResponse(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
+                }
             }
-
             switch (session.getUri()) {
                 case "/":
                     return handleIndexRequest(session);

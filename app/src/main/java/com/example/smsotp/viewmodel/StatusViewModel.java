@@ -27,7 +27,7 @@ public class StatusViewModel extends AndroidViewModel {
     private static final String TAG = "StatusViewModel";
     private final WifiStateReceiver receiver = new WifiStateReceiver();
     private MutableLiveData<String> wifiIpLiveData = new MutableLiveData<>();
-    private LiveData<Boolean> serverStateLiveData = WebService.getIsRunning();
+    private LiveData<Boolean> serverStateLiveData = WebService.isRunning;
     private String databaseName, serverPort;
 
     public StatusViewModel(@NonNull Application application) {
