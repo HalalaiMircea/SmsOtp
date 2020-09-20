@@ -64,8 +64,8 @@ public class WebService extends Service {
     @Override
     public void onCreate() {
         isRunning.setValue(true);
-        webServer = new WebServer(this, 8080);
         startForeground(1, createNotification());
+        webServer = new WebServer(this, 8080);
         try {
             webServer.start();
             Log.i(TAG, "Web Service started!");
