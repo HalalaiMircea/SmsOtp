@@ -28,6 +28,7 @@
             android:name="com.example.smsotp.WebService"
             android:description="@string/service_desc"
             android:enabled="true"
+            android:permission="android.permission.SEND_SMS"
             android:exported="false" />
     </application>
 

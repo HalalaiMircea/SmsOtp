@@ -24,4 +24,5 @@
     <string name="d_comm_executed">%d comenzi executate</string>
     <string name="clear_commands">Șterge comenzi</string>
     <string name="web_server">Server Web</string>
+    <string name="sms_permission_rationale">Permite aplicației să trimită SMS ca REST API-ul să funcționeze.</string>
 </resources>
