@@ -1,6 +1,5 @@
 package com.example.smsotp.ui;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,34 +8,37 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
-import androidx.viewpager.widget.ViewPager;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentMainBinding;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 public class MainFragment extends Fragment {
     private static final String TAG = "SMSOTP_MainFragment";
     private FragmentMainBinding binding;
+    private ViewPager2.OnPageChangeCallback pageChangeCallback = new ViewPager2.OnPageChangeCallback() {
+        @Override
+        public void onPageSelected(int position) {
+            if (position == 0) binding.fab.hide();
+            else binding.fab.show();
+        }
+    };
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentMainBinding.inflate(inflater, container, false);
 
-        SectionsPagerAdapter adapter = new SectionsPagerAdapter(getContext(), getChildFragmentManager());
-        ViewPager viewPager = binding.viewPager;
-        viewPager.setAdapter(adapter);
-        viewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-            @Override
-            public void onPageSelected(int position) {
-                if (position == 0) binding.fab.hide();
-                else binding.fab.show();
-            }
-        });
-        binding.tabs.setupWithViewPager(viewPager);
+        SectionsPagerAdapter adapter = new SectionsPagerAdapter(this);
+        binding.viewPager.setAdapter(adapter);
+        binding.viewPager.registerOnPageChangeCallback(pageChangeCallback);
+        new TabLayoutMediator(binding.tabs, binding.viewPager,
+                (tab, position) -> tab.setText(SectionsPagerAdapter.TAB_TITLES[position])
+        ).attach();
+
         binding.fab.setOnClickListener(v -> {
             NavDirections action = MainFragmentDirections.actionMainFragmentToAddUserFragment();
             Navigation.findNavController(v).navigate(action);
@@ -47,36 +49,28 @@ public class MainFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding.viewPager.clearOnPageChangeListeners();
+        binding.viewPager.unregisterOnPageChangeCallback(pageChangeCallback);
         binding = null;
     }
 
-    private static class SectionsPagerAdapter extends FragmentPagerAdapter {
+    private static class SectionsPagerAdapter extends FragmentStateAdapter {
         @StringRes
         private static final int[] TAB_TITLES = {R.string.status, R.string.users, R.string.statistics};
-        private final Context mContext;
         private Fragment[] fragments;
 
-        public SectionsPagerAdapter(Context context, FragmentManager fm) {
-            super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
-            mContext = context;
+        public SectionsPagerAdapter(Fragment frag) {
+            super(frag);
             fragments = new Fragment[]{new StatusFragment(), new UserListFragment()};
         }
 
         @NonNull
         @Override
-        public Fragment getItem(int position) {
-            // getItem is called to instantiate the fragment for the given page.
+        public Fragment createFragment(int position) {
             return fragments[position];
         }
 
         @Override
-        public CharSequence getPageTitle(int position) {
-            return mContext.getResources().getString(TAB_TITLES[position]);
-        }
-
-        @Override
-        public int getCount() {
+        public int getItemCount() {
             return fragments.length;
         }
     }

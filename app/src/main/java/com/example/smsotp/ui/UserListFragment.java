@@ -22,6 +22,7 @@ import com.example.smsotp.databinding.FragmentUserListBinding;
 import com.example.smsotp.databinding.UserListItemBinding;
 import com.example.smsotp.entity.User;
 import com.example.smsotp.viewmodel.MainViewModel;
+import com.example.smsotp.viewmodel.MainViewModel.UserItem;
 
 public class UserListFragment extends Fragment {
     private static final String TAG = "UserListFragment";
@@ -40,7 +41,7 @@ public class UserListFragment extends Fragment {
 
         final Adapter adapter = new Adapter();
         binding.list.setAdapter(adapter);
-        viewModel.getUsers().observe(getViewLifecycleOwner(), adapter::submitList);
+        viewModel.getUserItemData().observe(getViewLifecycleOwner(), adapter::submitList);
 
         return binding.getRoot();
     }
@@ -54,18 +55,19 @@ public class UserListFragment extends Fragment {
     /**
      * {@link RecyclerView.Adapter} that can display a {@link User}.
      */
-    private static class Adapter extends ListAdapter<User, ViewHolder> {
-        private static final DiffUtil.ItemCallback<User> DIFF_CALLBACK = new DiffUtil.ItemCallback<User>() {
-            @Override
-            public boolean areItemsTheSame(User oldItem, User newItem) {
-                return oldItem.id == newItem.id;
-            }
+    private static class Adapter extends ListAdapter<UserItem, ViewHolder> {
+        private static final DiffUtil.ItemCallback<UserItem> DIFF_CALLBACK =
+                new DiffUtil.ItemCallback<UserItem>() {
+                    @Override
+                    public boolean areItemsTheSame(UserItem oldItem, UserItem newItem) {
+                        return oldItem.getId() == newItem.getId();
+                    }
 
-            @Override
-            public boolean areContentsTheSame(User oldItem, User newItem) {
-                return oldItem.username.equals(newItem.username);
-            }
-        };
+                    @Override
+                    public boolean areContentsTheSame(UserItem oldItem, UserItem newItem) {
+                        return oldItem.getUsername().equals(newItem.getUsername());
+                    }
+                };
 
         public Adapter() {
             super(DIFF_CALLBACK);
@@ -82,8 +84,8 @@ public class UserListFragment extends Fragment {
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
             // Here we set info for each individual item's info
-            holder.binding.userName.setText(getItem(position).username);
-            holder.userId = getItem(position).id;
+            holder.binding.userName.setText(getItem(position).getUsername());
+            holder.userId = getItem(position).getId();
         }
     }
 

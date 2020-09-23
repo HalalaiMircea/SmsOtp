@@ -106,11 +106,11 @@ public class UserFragment extends Fragment {
         @NonNull
         @Override
         public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setMessage(R.string.del_user_confirm)
+            return new AlertDialog.Builder(getContext())
+                    .setMessage(R.string.del_user_confirm)
                     .setPositiveButton(R.string.delete_user, this::onPositive)
-                    .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.dismiss());
-            return builder.create();
+                    .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.dismiss())
+                    .create();
         }
 
         private void onPositive(DialogInterface dialog, int which) {

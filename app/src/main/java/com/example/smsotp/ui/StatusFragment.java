@@ -16,7 +16,6 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.smsotp.BuildConfig;
 import com.example.smsotp.R;
 import com.example.smsotp.WebService;
 import com.example.smsotp.databinding.FragmentStatusBinding;
@@ -46,14 +45,9 @@ public class StatusFragment extends Fragment {
         viewModel.getIpLiveData().observe(getViewLifecycleOwner(), binding.ipTextView::setText);
         binding.dbTextView.setText(viewModel.getDatabaseName());
         binding.portTextView.setText(viewModel.getServerPort());
-
         binding.serverSwitch.setOnCheckedChangeListener(this::onCheckedChanged);
-
         if (checkSelfPermission(requireContext(), SEND_SMS) == PackageManager.PERMISSION_DENIED) {
             requestPermissions(new String[]{SEND_SMS}, PERMISSION_REQUEST);
-        } else if (BuildConfig.DEBUG) {
-            Log.d(TAG, "Server started automatically in debug build variant!");
-            binding.serverSwitch.setChecked(true);
         }
     }
 
@@ -83,7 +77,7 @@ public class StatusFragment extends Fragment {
             } else {
                 Log.e(TAG, "Permission " + permissions[0] + " denied by user!");
                 binding.serverSwitch.setEnabled(false);
-                showSnackbarRationale();
+                showSnackbarRationale(requireParentFragment().requireView());
             }
         }
     }
@@ -98,8 +92,8 @@ public class StatusFragment extends Fragment {
         }
     }
 
-    private void showSnackbarRationale() {
-        Snackbar.make(requireView(), R.string.sms_permission_rationale, Snackbar.LENGTH_INDEFINITE)
+    private void showSnackbarRationale(View view) {
+        Snackbar.make(view, R.string.sms_permission_rationale, Snackbar.LENGTH_INDEFINITE)
                 .setAction(R.string.action_settings, v -> {
                     Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                             Uri.parse("package:" + requireContext().getPackageName()));

@@ -5,24 +5,51 @@ import android.app.Application;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Transformations;
 
 import com.example.smsotp.AppDatabase;
 import com.example.smsotp.dao.UserDao;
 import com.example.smsotp.entity.User;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MainViewModel extends AndroidViewModel {
 
-    private final LiveData<List<User>> usersLiveData;
+    private final LiveData<List<UserItem>> userItemData;
 
     public MainViewModel(@NonNull Application application) {
         super(application);
         UserDao userDao = AppDatabase.getInstance(application).userDao();
-        usersLiveData = userDao.getAll();
+        LiveData<List<User>> usersLiveData = userDao.getAll();
+        userItemData = Transformations.map(usersLiveData, MainViewModel::apply);
     }
 
-    public LiveData<List<User>> getUsers() {
-        return usersLiveData;
+    private static List<UserItem> apply(List<User> userList) {
+        return userList.stream()
+                .map(user -> new UserItem(user.id, user.username))
+                .collect(Collectors.toList());
+    }
+
+    public LiveData<List<UserItem>> getUserItemData() {
+        return userItemData;
+    }
+
+    public static class UserItem {
+        private int id;
+        private String username;
+
+        public UserItem(int id, String username) {
+            this.id = id;
+            this.username = username;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getUsername() {
+            return username;
+        }
     }
 }

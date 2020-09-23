@@ -1,8 +1,13 @@
 package com.example.smsotp;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.example.smsotp.databinding.ActivityMainBinding;
 
@@ -16,5 +21,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(ActivityMainBinding.inflate(getLayoutInflater()).getRoot());
+
+        if (BuildConfig.DEBUG)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
+                    == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Server started automatically in debug build variant!");
+                startService(new Intent(this, WebService.class));
+            } else
+                Log.d(TAG, "Please grant SEND_SMS permission to start server automatically");
     }
 }
