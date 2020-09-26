@@ -16,13 +16,13 @@ import java.util.stream.Collectors;
 
 public class MainViewModel extends AndroidViewModel {
 
-    private final LiveData<List<UserItem>> userItemData;
+    private final LiveData<List<UserItem>> userItemsData;
 
     public MainViewModel(@NonNull Application application) {
         super(application);
         UserDao userDao = AppDatabase.getInstance(application).userDao();
         LiveData<List<User>> usersLiveData = userDao.getAll();
-        userItemData = Transformations.map(usersLiveData, MainViewModel::apply);
+        userItemsData = Transformations.map(usersLiveData, MainViewModel::apply);
     }
 
     private static List<UserItem> apply(List<User> userList) {
@@ -31,8 +31,8 @@ public class MainViewModel extends AndroidViewModel {
                 .collect(Collectors.toList());
     }
 
-    public LiveData<List<UserItem>> getUserItemData() {
-        return userItemData;
+    public LiveData<List<UserItem>> getUserItemsData() {
+        return userItemsData;
     }
 
     public static class UserItem {

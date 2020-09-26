@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -119,7 +118,7 @@ public class WebService extends Service {
             this.database = AppDatabase.getInstance(context);
 
             freemarkerCfg = new Configuration(new Version(2, 3, 30));
-            freemarkerCfg.setDefaultEncoding(StandardCharsets.UTF_8.name());
+            freemarkerCfg.setDefaultEncoding("UTF-8");
             try {
                 String parentPath = "";
                 String[] list = Objects.requireNonNull(this.context.getAssets().list(parentPath));
@@ -270,8 +269,12 @@ public class WebService extends Service {
                         .put(Keys.MESSAGE, jsonParams.getString(Keys.MESSAGE))
                         .put(Keys.RESULTS, jsonParams.get(Keys.RESULTS));
 
-                boolean useXML = Objects.nonNull(params.get("format")) &&
-                        params.get("format").get(0).toLowerCase().trim().equals("xml");
+                final String acceptHeader = session.getHeaders().get("accept");
+                boolean useXML = false;
+                if (acceptHeader != null) {
+                    useXML = acceptHeader.equals(mimeTypes().get("xml")) ||
+                            acceptHeader.equals("application/xml");
+                }
 
                 response = newFixedLengthResponse(Response.Status.OK,
                         mimeTypes().get(useXML ? "xml" : "json"),

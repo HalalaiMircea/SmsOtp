@@ -41,7 +41,7 @@ public class UserListFragment extends Fragment {
 
         final Adapter adapter = new Adapter();
         binding.list.setAdapter(adapter);
-        viewModel.getUserItemData().observe(getViewLifecycleOwner(), adapter::submitList);
+        viewModel.getUserItemsData().observe(getViewLifecycleOwner(), adapter::submitList);
 
         return binding.getRoot();
     }
