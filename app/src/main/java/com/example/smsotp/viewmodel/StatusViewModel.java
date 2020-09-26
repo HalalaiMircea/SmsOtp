@@ -15,6 +15,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.smsotp.AppDatabase;
 import com.example.smsotp.WebService;
+import com.example.smsotp.server.WebServer;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -35,7 +36,7 @@ public class StatusViewModel extends AndroidViewModel {
         IntentFilter filter = new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         getApplication().registerReceiver(receiver, filter);
         databaseName = AppDatabase.getInstance(application).getOpenHelper().getDatabaseName();
-        serverPort = String.valueOf(WebService.WebServer.port);
+        serverPort = String.valueOf(WebServer.port);
     }
 
     public LiveData<String> getIpLiveData() {

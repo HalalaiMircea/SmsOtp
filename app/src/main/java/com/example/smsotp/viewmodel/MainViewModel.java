@@ -8,8 +8,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Transformations;
 
 import com.example.smsotp.AppDatabase;
-import com.example.smsotp.dao.UserDao;
-import com.example.smsotp.entity.User;
+import com.example.smsotp.model.User;
+import com.example.smsotp.model.UserDao;
 
 import java.util.List;
 import java.util.stream.Collectors;

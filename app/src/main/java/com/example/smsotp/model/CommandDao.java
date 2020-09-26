@@ -1,12 +1,10 @@
-package com.example.smsotp.dao;
+package com.example.smsotp.model;
 
 import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
-
-import com.example.smsotp.entity.Command;
 
 import java.util.List;
 

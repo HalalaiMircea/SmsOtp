@@ -20,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smsotp.databinding.FragmentUserListBinding;
 import com.example.smsotp.databinding.UserListItemBinding;
-import com.example.smsotp.entity.User;
+import com.example.smsotp.model.User;
 import com.example.smsotp.viewmodel.MainViewModel;
 import com.example.smsotp.viewmodel.MainViewModel.UserItem;
 

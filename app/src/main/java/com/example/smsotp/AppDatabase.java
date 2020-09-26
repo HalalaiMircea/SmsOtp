@@ -11,10 +11,10 @@ import androidx.room.TypeConverter;
 import androidx.room.TypeConverters;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-import com.example.smsotp.dao.CommandDao;
-import com.example.smsotp.dao.UserDao;
-import com.example.smsotp.entity.Command;
-import com.example.smsotp.entity.User;
+import com.example.smsotp.model.Command;
+import com.example.smsotp.model.CommandDao;
+import com.example.smsotp.model.User;
+import com.example.smsotp.model.UserDao;
 
 import java.util.Date;
 

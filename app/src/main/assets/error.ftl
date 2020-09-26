@@ -31,11 +31,11 @@
 <body>
 <h1>HTTP Status ${status}</h1>
 <hr>
-<p><span>Path</span> ${path}</p>
+<p><span>Path</span> ${uri}</p>
 <p><span>Description</span> ${description}</p>
-<#if ex_stacktrace??>
+<#if exStacktrace??>
 <p><span>Exception</span></p>
-<p class="ex-block">${ex_stacktrace}</p>
+<p class="ex-block">${exStacktrace}</p>
 </#if>
 <hr>
 <h2>NanoHTTPD/2.3.1</h2>

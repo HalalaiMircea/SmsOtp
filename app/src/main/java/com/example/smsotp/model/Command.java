@@ -1,4 +1,4 @@
-package com.example.smsotp.entity;
+package com.example.smsotp.model;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;

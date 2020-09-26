@@ -7,9 +7,9 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
 import com.example.smsotp.AppDatabase;
-import com.example.smsotp.dao.CommandDao;
-import com.example.smsotp.dao.UserDao;
-import com.example.smsotp.entity.User;
+import com.example.smsotp.model.CommandDao;
+import com.example.smsotp.model.User;
+import com.example.smsotp.model.UserDao;
 
 import java.util.Objects;
 
