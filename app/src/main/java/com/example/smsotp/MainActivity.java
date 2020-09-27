@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -27,7 +28,10 @@ public class MainActivity extends AppCompatActivity {
                     == PackageManager.PERMISSION_GRANTED) {
                 Log.d(TAG, "Server started automatically in debug build variant!");
                 startService(new Intent(this, WebService.class));
-            } else
-                Log.d(TAG, "Please grant SEND_SMS permission to start server automatically");
+            } else {
+                final String msg = "Please grant SEND_SMS permission to start server automatically";
+                Log.d(TAG, msg);
+                Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+            }
     }
 }

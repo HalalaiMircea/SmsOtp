@@ -41,12 +41,10 @@ android {
 }
 
 dependencies {
-    implementation 'com.google.code.gson:gson:2.8.6'
     def room_version = "2.2.5"
 
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.viewpager2:viewpager2:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
     implementation 'androidx.navigation:navigation-fragment:2.3.0'
@@ -61,13 +59,16 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.google.android.material:material:1.2.1'
+
     //noinspection DuplicatePlatformClasses
     implementation group: 'org.json', name: 'json', version: '20200518'
     // Apache Freemarker
     implementation 'org.freemarker:freemarker-gae:2.3.30'
     // NanoHTTPD
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
-//    implementation 'org.nanohttpd:nanohttpd-nanolets:2.3.1'
+    implementation 'org.nanohttpd:nanohttpd-nanolets:2.3.1'
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.10'
 }
