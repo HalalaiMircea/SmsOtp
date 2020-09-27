@@ -9,7 +9,6 @@ import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
-import fi.iki.elonen.router.RouterNanoHTTPD;
 import fi.iki.elonen.router.RouterNanoHTTPD.UriResource;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -18,7 +17,7 @@ import static fi.iki.elonen.NanoHTTPD.MIME_HTML;
 import static fi.iki.elonen.NanoHTTPD.MIME_PLAINTEXT;
 import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 
-public class ErrorHandler implements RouterNanoHTTPD.UriResponder {
+public class ErrorHandler extends ServerUtils.HtmlHandler {
     private static final String TAG = "Web_ErrorHandler";
 
     @Override
@@ -34,26 +33,5 @@ public class ErrorHandler implements RouterNanoHTTPD.UriResponder {
             e.printStackTrace();
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, e.getMessage());
         }
-    }
-
-    @Override
-    public Response put(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        return get(uriResource, urlParams, session);
-    }
-
-    @Override
-    public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        return get(uriResource, urlParams, session);
-    }
-
-    @Override
-    public Response delete(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        return get(uriResource, urlParams, session);
-    }
-
-    @Override
-    public Response other(String method, UriResource uriResource, Map<String, String> urlParams,
-                          IHTTPSession session) {
-        return get(uriResource, urlParams, session);
     }
 }

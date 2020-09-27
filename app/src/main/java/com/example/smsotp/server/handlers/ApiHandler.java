@@ -21,10 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import fi.iki.elonen.NanoHTTPD;
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
-import fi.iki.elonen.router.RouterNanoHTTPD;
 import fi.iki.elonen.router.RouterNanoHTTPD.UriResource;
 
 import static com.example.smsotp.server.WebServer.database;
@@ -32,18 +30,12 @@ import static com.example.smsotp.server.WebServer.gson;
 import static fi.iki.elonen.NanoHTTPD.mimeTypes;
 import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 
-public class ApiHandler implements RouterNanoHTTPD.UriResponder {
+public class ApiHandler extends ServerUtils.RestHandler {
     private static final String TAG = "Web_ApiHandler";
     private Context context;
 
-    @Override
-    public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        return post(uriResource, urlParams, session);
-    }
-
-    @Override
-    public Response put(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        return post(uriResource, urlParams, session);
+    {
+        errorDescription = "Only POST requests are allowed!";
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -52,11 +44,6 @@ public class ApiHandler implements RouterNanoHTTPD.UriResponder {
         if (context == null) context = uriResource.initParameter(Context.class);
         Map<String, List<String>> params = session.getParameters();
 
-        if (session.getMethod() != NanoHTTPD.Method.POST) {
-            return handleErrorRest(new ServerUtils.HttpError(Response.Status.METHOD_NOT_ALLOWED,
-                    session.getUri(),
-                    null, "Only POST requests are allowed!"));
-        }
         List<String> usernameParam = params.get(Keys.USERNAME);
         List<String> passwordParam = params.get(Keys.PASSWORD);
         try {
@@ -69,9 +56,8 @@ public class ApiHandler implements RouterNanoHTTPD.UriResponder {
                         session.getUri(), null,
                         "Incorrect username and/or password!"));
         } catch (IllegalArgumentException e) {
-            return handleErrorRest(new ServerUtils.HttpError(Response.Status.UNAUTHORIZED, session.getUri()
-                    , null,
-                    "Missing username or password parameters!"));
+            return handleErrorRest(new ServerUtils.HttpError(Response.Status.UNAUTHORIZED, session.getUri(),
+                    null, "Missing username or password parameters!"));
         }
 
         Response response;
@@ -108,17 +94,6 @@ public class ApiHandler implements RouterNanoHTTPD.UriResponder {
                     session.getUri(), e, null));
         }
         return response;
-    }
-
-    @Override
-    public Response delete(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        return post(uriResource, urlParams, session);
-    }
-
-    @Override
-    public Response other(String method, UriResource uriResource, Map<String, String> urlParams,
-                          IHTTPSession session) {
-        return post(uriResource, urlParams, session);
     }
 
     private Response handleErrorRest(ServerUtils.HttpError error) {
