@@ -26,23 +26,18 @@ import fi.iki.elonen.NanoHTTPD.Response;
 import fi.iki.elonen.router.RouterNanoHTTPD.UriResource;
 
 import static com.example.smsotp.server.WebServer.database;
-import static com.example.smsotp.server.WebServer.gson;
-import static fi.iki.elonen.NanoHTTPD.mimeTypes;
 import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 
 public class ApiHandler extends ServerUtils.RestHandler {
     private static final String TAG = "Web_ApiHandler";
     private Context context;
 
-    {
-        errorDescription = "Only POST requests are allowed!";
-    }
-
     @SuppressWarnings("ConstantConditions")
     @Override
     public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        if (context == null) context = uriResource.initParameter(Context.class);
+        super.post(uriResource, urlParams, session);
         Map<String, List<String>> params = session.getParameters();
+        context = uriResource.initParameter(Context.class);
 
         List<String> usernameParam = params.get(Keys.USERNAME);
         List<String> passwordParam = params.get(Keys.PASSWORD);
@@ -53,14 +48,12 @@ public class ApiHandler extends ServerUtils.RestHandler {
             String password = database.userDao().getPasswordByUsername(usernameParam.get(0));
             if (password == null || !password.equals(passwordParam.get(0)))
                 return handleErrorRest(new ServerUtils.HttpError(Response.Status.UNAUTHORIZED,
-                        session.getUri(), null,
-                        "Incorrect username and/or password!"));
+                        session.getUri(), null, "Incorrect username and/or password!"));
         } catch (IllegalArgumentException e) {
             return handleErrorRest(new ServerUtils.HttpError(Response.Status.UNAUTHORIZED, session.getUri(),
                     null, "Missing username or password parameters!"));
         }
 
-        Response response;
         try {
             ServerUtils.validateParams(params.get(Keys.MESSAGE));
             ServerUtils.validatePhones(params.get(Keys.PHONES));
@@ -76,28 +69,17 @@ public class ApiHandler extends ServerUtils.RestHandler {
                     .put(Keys.MESSAGE, jsonParams.getString(Keys.MESSAGE))
                     .put(Keys.RESULTS, jsonParams.get(Keys.RESULTS));
 
-            final String acceptHeader = session.getHeaders().get("accept");
-            boolean useXML = false;
-            if (acceptHeader != null) {
-                useXML = acceptHeader.equals(mimeTypes().get("xml")) ||
-                        acceptHeader.equals("application/xml");
-            }
-
-            response = newFixedLengthResponse(Response.Status.OK, mimeTypes().get(useXML ? "xml" : "json"),
-                    useXML ? XML.toString(jsonResponse, "root") : jsonResponse.toString());
+            return newFixedLengthResponse(Response.Status.OK, dataFormat,
+                    dataFormat.equals(MIME_JSON) ? jsonResponse.toString() :
+                            XML.toString(jsonResponse, "root"));
         } catch (IllegalArgumentException e) {
-            response = handleErrorRest(new ServerUtils.HttpError(Response.Status.BAD_REQUEST,
+            return handleErrorRest(new ServerUtils.HttpError(Response.Status.BAD_REQUEST,
                     session.getUri(), null, "Missing or invalid message and/or phones parameters!"));
         } catch (Exception e) {
             e.printStackTrace();
-            response = handleErrorRest(new ServerUtils.HttpError(Response.Status.INTERNAL_ERROR,
+            return handleErrorRest(new ServerUtils.HttpError(Response.Status.INTERNAL_ERROR,
                     session.getUri(), e, null));
         }
-        return response;
-    }
-
-    private Response handleErrorRest(ServerUtils.HttpError error) {
-        return newFixedLengthResponse(error.status, mimeTypes().get("json"), gson.toJson(error));
     }
 
     /**

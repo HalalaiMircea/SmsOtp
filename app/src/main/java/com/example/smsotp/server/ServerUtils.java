@@ -2,17 +2,24 @@ package com.example.smsotp.server;
 
 import android.util.Patterns;
 
+import org.commonjava.mimeparse.MIMEParse;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.XML;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import fi.iki.elonen.NanoHTTPD;
+import fi.iki.elonen.NanoHTTPD.IHTTPSession;
+import fi.iki.elonen.NanoHTTPD.Response;
 import fi.iki.elonen.router.RouterNanoHTTPD;
+import fi.iki.elonen.router.RouterNanoHTTPD.UriResource;
 
 import static com.example.smsotp.server.WebServer.gson;
-import static fi.iki.elonen.NanoHTTPD.mimeTypes;
 import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 
 public class ServerUtils {
@@ -43,13 +50,12 @@ public class ServerUtils {
      * POJO to reduce bloat in important handlers
      */
     public static class HttpError {
-        public NanoHTTPD.Response.Status status;
+        public Response.Status status;
         public String uri;
         public String exStacktrace;
         public String description;
 
-        public HttpError(NanoHTTPD.Response.Status status, String uri, Exception exception,
-                         String description) {
+        public HttpError(Response.Status status, String uri, Exception exception, String description) {
             this.status = status;
             this.uri = uri;
             this.description = description;
@@ -77,74 +83,85 @@ public class ServerUtils {
     public abstract static class HtmlHandler implements RouterNanoHTTPD.UriResponder {
 
         @Override
-        public abstract NanoHTTPD.Response get(RouterNanoHTTPD.UriResource uriResource,
-                                               Map<String, String> urlParams, NanoHTTPD.IHTTPSession session);
+        public abstract Response get(UriResource uriResource, Map<String, String> urlParams,
+                                     IHTTPSession session);
 
         @Override
-        public NanoHTTPD.Response put(RouterNanoHTTPD.UriResource uriResource,
-                                      Map<String, String> urlParams, NanoHTTPD.IHTTPSession session) {
+        public Response put(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
             return get(uriResource, urlParams, session);
         }
 
         @Override
-        public NanoHTTPD.Response post(RouterNanoHTTPD.UriResource uriResource,
-                                       Map<String, String> urlParams, NanoHTTPD.IHTTPSession session) {
+        public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
             return get(uriResource, urlParams, session);
         }
 
         @Override
-        public NanoHTTPD.Response delete(RouterNanoHTTPD.UriResource uriResource,
-                                         Map<String, String> urlParams, NanoHTTPD.IHTTPSession session) {
+        public Response delete(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
             return get(uriResource, urlParams, session);
         }
 
         @Override
-        public NanoHTTPD.Response other(String method, RouterNanoHTTPD.UriResource uriResource, Map<String,
-                String> urlParams, NanoHTTPD.IHTTPSession session) {
+        public Response other(String method, UriResource uriResource, Map<String, String> urlParams,
+                              IHTTPSession session) {
             return get(uriResource, urlParams, session);
         }
     }
 
     public abstract static class RestHandler implements RouterNanoHTTPD.UriResponder {
-        protected String errorDescription;
+        protected static final String MIME_JSON = "application/json";
+        protected static String[] supportedMimeTypes = {"application/xml", "text/xml", MIME_JSON};
+        protected String dataFormat = MIME_JSON;
 
         @Override
-        public NanoHTTPD.Response get(RouterNanoHTTPD.UriResource uriResource,
-                                      Map<String, String> urlParams, NanoHTTPD.IHTTPSession session) {
+        public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
             return defaultResponse(session);
         }
 
         @Override
-        public NanoHTTPD.Response put(RouterNanoHTTPD.UriResource uriResource,
-                                      Map<String, String> urlParams, NanoHTTPD.IHTTPSession session) {
+        public Response put(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
             return defaultResponse(session);
         }
 
         @Override
-        public NanoHTTPD.Response post(RouterNanoHTTPD.UriResource uriResource,
-                                       Map<String, String> urlParams, NanoHTTPD.IHTTPSession session) {
+        public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
             return defaultResponse(session);
         }
 
         @Override
-        public NanoHTTPD.Response delete(RouterNanoHTTPD.UriResource uriResource,
-                                         Map<String, String> urlParams, NanoHTTPD.IHTTPSession session) {
+        public Response delete(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
             return defaultResponse(session);
         }
 
         @Override
-        public NanoHTTPD.Response other(String method, RouterNanoHTTPD.UriResource uriResource, Map<String,
-                String> urlParams, NanoHTTPD.IHTTPSession session) {
+        public Response other(String method, UriResource uriResource, Map<String, String> urlParams,
+                              IHTTPSession session) {
             return defaultResponse(session);
         }
 
-        protected NanoHTTPD.Response defaultResponse(NanoHTTPD.IHTTPSession session) {
-            HttpError error = new HttpError(NanoHTTPD.Response.Status.METHOD_NOT_ALLOWED,
-                    session.getUri(), null, errorDescription);
-            return newFixedLengthResponse(error.status, mimeTypes().get("json"), gson.toJson(error));
+        protected Response defaultResponse(IHTTPSession session) {
+            final String acceptHeader = session.getHeaders().get("accept");
+            if (acceptHeader != null) {
+                dataFormat = MIMEParse.bestMatch(Arrays.asList(supportedMimeTypes), acceptHeader);
+            }
+            HttpError error = new HttpError(Response.Status.METHOD_NOT_ALLOWED,
+                    session.getUri(), null, "This Method is not supported!");
+            return handleErrorRest(error);
         }
 
-        //protected abstract String errorDescription();
+        protected Response handleErrorRest(HttpError error) {
+            String responseData = null;
+            final String jsonString = gson.toJson(error);
+            if (dataFormat.equals(MIME_JSON)) {
+                responseData = jsonString;
+            } else {
+                try {
+                    responseData = XML.toString(new JSONObject(jsonString), "error");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            return newFixedLengthResponse(error.status, dataFormat, responseData);
+        }
     }
-
 }
