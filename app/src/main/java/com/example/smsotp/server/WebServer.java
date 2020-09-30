@@ -25,7 +25,6 @@ import freemarker.template.Version;
 
 public class WebServer extends RouterNanoHTTPD {
     private static final String TAG = "SMSOTP_NanoHTTPD";
-    public static int port = 8080;
     public static Configuration freemarkerCfg;
     public static Gson gson;
     public static AppDatabase database;
@@ -39,31 +38,11 @@ public class WebServer extends RouterNanoHTTPD {
 
     public WebServer(Context context, int port) {
         super(port);
-        WebServer.port = port;
         WebServer.database = AppDatabase.getInstance(context);
         this.context = context;
 
         Log.i(TAG, "Configuration time: " + configure());
         addMappings();
-    }
-
-    private long configure() {
-        long t1 = System.currentTimeMillis();
-        freemarkerCfg = new Configuration(new Version(2, 3, 30));
-        freemarkerCfg.setDefaultEncoding("UTF-8");
-        gson = new Gson();
-        try {
-            String parentPath = "";
-            String[] list = Objects.requireNonNull(this.context.getAssets().list(parentPath));
-            List<String> htmlFiles = Arrays.stream(list)
-                    .filter(s -> s.substring(s.lastIndexOf('.') + 1).equals("ftl"))
-                    .map(s -> parentPath + s)
-                    .collect(Collectors.toList());
-            loadTemplates(htmlFiles);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return System.currentTimeMillis() - t1;
     }
 
     @Override
@@ -88,6 +67,25 @@ public class WebServer extends RouterNanoHTTPD {
             }
         }
         return super.serve(session);
+    }
+
+    private long configure() {
+        long t1 = System.currentTimeMillis();
+        freemarkerCfg = new Configuration(new Version(2, 3, 30));
+        freemarkerCfg.setDefaultEncoding("UTF-8");
+        gson = new Gson();
+        try {
+            String parentPath = "";
+            String[] list = Objects.requireNonNull(this.context.getAssets().list(parentPath));
+            List<String> htmlFiles = Arrays.stream(list)
+                    .filter(s -> s.substring(s.lastIndexOf('.') + 1).equals("ftl"))
+                    .map(s -> parentPath + s)
+                    .collect(Collectors.toList());
+            loadTemplates(htmlFiles);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return System.currentTimeMillis() - t1;
     }
 
     private void loadTemplates(List<String> files) throws IOException {

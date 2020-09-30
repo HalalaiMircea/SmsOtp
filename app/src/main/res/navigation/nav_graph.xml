@@ -23,7 +23,10 @@
             android:id="@+id/action_mainFragment_to_userFragment"
             app:destination="@id/userFragment"
             app:enterAnim="@anim/fragment_open_enter"
-            app:popEnterAnim="@anim/fragment_close_enter" />
+            app:exitAnim="@anim/fragment_open_exit"
+            app:popEnterAnim="@anim/fragment_close_enter"
+            app:popExitAnim="@anim/fragment_close_exit"
+            tools:ignore="PrivateResource" />
     </fragment>
     <fragment
         android:id="@+id/addUserFragment"

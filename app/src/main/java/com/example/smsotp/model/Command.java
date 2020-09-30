@@ -11,8 +11,13 @@ import java.util.Objects;
 
 import static androidx.room.ForeignKey.CASCADE;
 
-@Entity(foreignKeys = @ForeignKey(entity = User.class, parentColumns = "id", childColumns = "userId",
-        onDelete = CASCADE), indices = @Index(value = {"userId"}))
+@Entity(
+        foreignKeys = @ForeignKey(
+                entity = User.class,
+                parentColumns = "id",
+                childColumns = "userId",
+                onDelete = CASCADE),
+        indices = @Index(value = {"userId"}))
 public class Command {
     @PrimaryKey(autoGenerate = true)
     public int id;

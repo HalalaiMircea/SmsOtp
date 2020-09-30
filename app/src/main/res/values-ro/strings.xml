@@ -25,4 +25,7 @@
     <string name="clear_commands">Șterge comenzi</string>
     <string name="web_server">Server Web</string>
     <string name="sms_permission_rationale">Permite aplicației să trimită SMS ca REST API-ul să funcționeze.</string>
+    <string name="server_port">Port Server</string>
+    <string name="setting_port_summary">Portul pe care serverul va rula</string>
+    <string name="pref_port_warning">Oprește serverul înainte de a schimba portul!</string>
 </resources>

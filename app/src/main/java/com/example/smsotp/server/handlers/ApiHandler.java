@@ -11,6 +11,7 @@ import android.util.Log;
 
 import com.example.smsotp.model.Command;
 import com.example.smsotp.server.ServerUtils;
+import com.example.smsotp.server.ServerUtils.HttpError;
 
 import org.json.JSONObject;
 import org.json.XML;
@@ -38,6 +39,7 @@ public class ApiHandler extends ServerUtils.RestHandler {
         super.post(uriResource, urlParams, session);
         Map<String, List<String>> params = session.getParameters();
         context = uriResource.initParameter(Context.class);
+        Log.d(TAG, "Accepted MIME type: " + dataFormat);
 
         List<String> usernameParam = params.get(Keys.USERNAME);
         List<String> passwordParam = params.get(Keys.PASSWORD);
@@ -47,10 +49,10 @@ public class ApiHandler extends ServerUtils.RestHandler {
             // If returned password string is null, username doesn't exist
             String password = database.userDao().getPasswordByUsername(usernameParam.get(0));
             if (password == null || !password.equals(passwordParam.get(0)))
-                return handleErrorRest(new ServerUtils.HttpError(Response.Status.UNAUTHORIZED,
+                return handleErrorRest(new HttpError(Response.Status.UNAUTHORIZED,
                         session.getUri(), null, "Incorrect username and/or password!"));
         } catch (IllegalArgumentException e) {
-            return handleErrorRest(new ServerUtils.HttpError(Response.Status.UNAUTHORIZED, session.getUri(),
+            return handleErrorRest(new HttpError(Response.Status.UNAUTHORIZED, session.getUri(),
                     null, "Missing username or password parameters!"));
         }
 
@@ -60,25 +62,21 @@ public class ApiHandler extends ServerUtils.RestHandler {
 
             JSONObject jsonParams = sendManySms(params.get(Keys.PHONES), params.get(Keys.MESSAGE).get(0));
             int userId = database.userDao().getIdByUsername(usernameParam.get(0));
-            final Command command = new Command(userId, jsonParams.toString(), new Date());
+            Command command = new Command(userId, jsonParams.toString(), new Date());
             int commId = (int) database.commandDao().insert(command);
 
-            JSONObject jsonResponse = new JSONObject();
-            jsonResponse.put("commandId", commId)
-                    .put("userId", userId)
-                    .put(Keys.MESSAGE, jsonParams.getString(Keys.MESSAGE))
-                    .put(Keys.RESULTS, jsonParams.get(Keys.RESULTS));
-
+            JSONObject jsonResponse = jsonParams
+                    .put("commandId", commId)
+                    .put("userId", userId);
             return newFixedLengthResponse(Response.Status.OK, dataFormat,
                     dataFormat.equals(MIME_JSON) ? jsonResponse.toString() :
                             XML.toString(jsonResponse, "root"));
         } catch (IllegalArgumentException e) {
-            return handleErrorRest(new ServerUtils.HttpError(Response.Status.BAD_REQUEST,
+            return handleErrorRest(new HttpError(Response.Status.BAD_REQUEST,
                     session.getUri(), null, "Missing or invalid message and/or phones parameters!"));
         } catch (Exception e) {
             e.printStackTrace();
-            return handleErrorRest(new ServerUtils.HttpError(Response.Status.INTERNAL_ERROR,
-                    session.getUri(), e, null));
+            return handleErrorRest(new HttpError(Response.Status.INTERNAL_ERROR, session.getUri(), e, null));
         }
     }
 
@@ -92,19 +90,17 @@ public class ApiHandler extends ServerUtils.RestHandler {
      * @throws Exception if JSON parsing failed or thread is interrupted
      */
     private JSONObject sendManySms(List<String> phones, String msg) throws Exception {
-        String packageName = Objects.requireNonNull(getClass().getPackage()).getName()
-                + ".SMS_SENT" + Thread.currentThread().getId() + "#";
-        final String[] SENT_IDS = new String[phones.size()];
-        for (int i = 0; i < phones.size(); i++) SENT_IDS[i] = packageName + i;
-
-        PendingIntent[] sentPIs = new PendingIntent[phones.size()];
-        for (int i = 0; i < phones.size(); i++)
-            sentPIs[i] = PendingIntent.getBroadcast(context, 0, new Intent(SENT_IDS[i]), 0);
-
-        IntentFilter intentFilter = new IntentFilter();
-        for (String action : SENT_IDS) intentFilter.addAction(action);
+        final String baseAction = getClass().getName() + Thread.currentThread().getId() + "#";
+        final PendingIntent[] sentPIs = new PendingIntent[phones.size()];
+        IntentFilter filter = new IntentFilter();
+        // We build our pendingIntents for the smsManager using a per-thread, per-phone unique action name
+        for (int i = 0; i < phones.size(); i++) {
+            String action = baseAction + i;
+            sentPIs[i] = PendingIntent.getBroadcast(context, 0, new Intent(action), 0);
+            filter.addAction(action);
+        }
         SentSmsReceiver receiver = new SentSmsReceiver(phones.size());
-        context.registerReceiver(receiver, intentFilter);
+        context.registerReceiver(receiver, filter);
 
         SmsManager smsManager = SmsManager.getDefault();
         for (int i = 0; i < phones.size(); i++)
@@ -117,13 +113,11 @@ public class ApiHandler extends ServerUtils.RestHandler {
         Log.d(TAG, "SENT_SMS Result: " + receiver.resultTypes);
         context.unregisterReceiver(receiver);   // Prevent memory leak
 
-        JSONObject json = new JSONObject();
-        json.put(Keys.MESSAGE, msg);
+        JSONObject json = new JSONObject().put(Keys.MESSAGE, msg);
         for (int i = 0; i < phones.size(); i++) {
-            JSONObject phoneStatusPair = new JSONObject();
-            phoneStatusPair.put("phone", phones.get(i))
-                    .put("status", receiver.resultTypes.get(i));
-            json.accumulate(Keys.RESULTS, phoneStatusPair);
+            json.accumulate(Keys.RESULTS, new JSONObject()
+                    .put("phone", phones.get(i))
+                    .put("status", receiver.resultTypes.get(i)));
         }
         return json;
     }

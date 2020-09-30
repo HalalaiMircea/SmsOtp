@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 
@@ -12,10 +14,11 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.preference.PreferenceManager;
 
 import com.example.smsotp.AppDatabase;
 import com.example.smsotp.WebService;
-import com.example.smsotp.server.WebServer;
+import com.example.smsotp.ui.SettingsFragment;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -26,17 +29,30 @@ import static android.content.Context.WIFI_SERVICE;
 
 public class StatusViewModel extends AndroidViewModel {
     private static final String TAG = "StatusViewModel";
+    // Data providers
     private final WifiStateReceiver receiver = new WifiStateReceiver();
+    private final OnSharedPreferenceChangeListener prefsChangeListener;
+    private final SharedPreferences sharedPrefs;
+
+    // LiveData
     private MutableLiveData<String> wifiIpLiveData = new MutableLiveData<>();
     private LiveData<Boolean> serverStateLiveData = WebService.isRunning;
-    private String databaseName, serverPort;
+    private MutableLiveData<String> serverPort;
+    private String databaseName;
 
     public StatusViewModel(@NonNull Application application) {
         super(application);
-        IntentFilter filter = new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION);
-        getApplication().registerReceiver(receiver, filter);
+        getApplication().registerReceiver(receiver,
+                new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));
+        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(application);
+        prefsChangeListener = (sharedPreferences, key) -> {
+            if (key.equals(SettingsFragment.KEY_PREF_PORT)) {
+                serverPort.setValue(sharedPreferences.getString(key, "8080"));
+            }
+        };
+        sharedPrefs.registerOnSharedPreferenceChangeListener(prefsChangeListener);
+        serverPort = new MutableLiveData<>(sharedPrefs.getString(SettingsFragment.KEY_PREF_PORT, "8080"));
         databaseName = AppDatabase.getInstance(application).getOpenHelper().getDatabaseName();
-        serverPort = String.valueOf(WebServer.port);
     }
 
     public LiveData<String> getIpLiveData() {
@@ -51,13 +67,14 @@ public class StatusViewModel extends AndroidViewModel {
         return databaseName;
     }
 
-    public String getServerPort() {
+    public LiveData<String> getServerPort() {
         return serverPort;
     }
 
     @Override
     protected void onCleared() {
         getApplication().unregisterReceiver(receiver);
+        sharedPrefs.unregisterOnSharedPreferenceChangeListener(prefsChangeListener);
     }
 
     private class WifiStateReceiver extends BroadcastReceiver {

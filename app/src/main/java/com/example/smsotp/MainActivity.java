@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
 import com.example.smsotp.databinding.ActivityMainBinding;
 
@@ -16,12 +17,14 @@ import com.example.smsotp.databinding.ActivityMainBinding;
  * Effectively, the application's main entry point
  */
 public class MainActivity extends AppCompatActivity {
-    static final String TAG = "SMSOTP_MainActivity";
+    private static final String TAG = "SMSOTP_MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(ActivityMainBinding.inflate(getLayoutInflater()).getRoot());
+        // Set default values to shared prefs on app first boot
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         if (BuildConfig.DEBUG)
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)

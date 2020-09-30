@@ -1,12 +1,18 @@
 package com.example.smsotp.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
@@ -14,6 +20,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.smsotp.R;
+import com.example.smsotp.SettingsActivity;
 import com.example.smsotp.databinding.FragmentMainBinding;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -29,9 +36,16 @@ public class MainFragment extends Fragment {
     };
 
     @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentMainBinding.inflate(inflater, container, false);
 
+        ((AppCompatActivity) requireActivity()).setSupportActionBar(binding.include.toolbar);
         SectionsPagerAdapter adapter = new SectionsPagerAdapter(this);
         binding.viewPager.setAdapter(adapter);
         binding.viewPager.registerOnPageChangeCallback(pageChangeCallback);
@@ -44,6 +58,23 @@ public class MainFragment extends Fragment {
             Navigation.findNavController(v).navigate(action);
         });
         return binding.getRoot();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_main, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.item_settings) {
+            Intent intent = new Intent(getContext(), SettingsActivity.class);
+            startActivity(intent);
+
+            return true;
+        }
+        return false;
     }
 
     @Override

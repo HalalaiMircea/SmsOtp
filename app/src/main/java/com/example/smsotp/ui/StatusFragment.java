@@ -43,8 +43,9 @@ public class StatusFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         viewModel.getServerState().observe(getViewLifecycleOwner(), binding.serverSwitch::setChecked);
         viewModel.getIpLiveData().observe(getViewLifecycleOwner(), binding.ipTextView::setText);
+        viewModel.getServerPort().observe(getViewLifecycleOwner(), binding.portTextView::setText);
+
         binding.dbTextView.setText(viewModel.getDatabaseName());
-        binding.portTextView.setText(viewModel.getServerPort());
         binding.serverSwitch.setOnCheckedChangeListener(this::onCheckedChanged);
         if (checkSelfPermission(requireContext(), SEND_SMS) == PackageManager.PERMISSION_DENIED) {
             requestPermissions(new String[]{SEND_SMS}, PERMISSION_REQUEST);

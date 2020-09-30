@@ -12,10 +12,13 @@ import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.MutableLiveData;
+import androidx.preference.PreferenceManager;
 
 import com.example.smsotp.server.WebServer;
+import com.example.smsotp.ui.SettingsFragment;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class WebService extends Service {
     private static final String TAG = "SMSOTP_WebService";
@@ -26,23 +29,22 @@ public class WebService extends Service {
     public void onCreate() {
         isRunning.setValue(true);
         startForeground(1, createNotification());
-        // We instantiate web server on background thread so we don't block UI thread
-        new Thread(() -> {
-            webServer = new WebServer(this, 8080);
-            try {
-                webServer.start();
-                Log.i(TAG, "Web Service started!");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
+        // Create and start the webServer on a background thread so we don't block the UI thread
+        new Thread(this::startServer).start();
     }
 
-    @Override
-    public void onDestroy() {
-        isRunning.setValue(false);
-        webServer.stop();
-        Log.i(TAG, "Web Service stopped!");
+    private void startServer() {
+        String portStr = Objects.requireNonNull(
+                PreferenceManager.getDefaultSharedPreferences(this)
+                        .getString(SettingsFragment.KEY_PREF_PORT, "8080")
+        );
+        webServer = new WebServer(this, Integer.parseInt(portStr));
+        try {
+            webServer.start();
+            Log.i(TAG, "Web Service started!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private Notification createNotification() {
@@ -65,6 +67,13 @@ public class WebService extends Service {
                 .setSmallIcon(R.drawable.ic_baseline_web_24)
                 .setContentIntent(pi)
                 .build();
+    }
+
+    @Override
+    public void onDestroy() {
+        isRunning.setValue(false);
+        webServer.stop();
+        Log.i(TAG, "Web Service stopped!");
     }
 
     @Override

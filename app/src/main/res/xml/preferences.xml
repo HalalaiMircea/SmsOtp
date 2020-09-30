@@ -1,0 +1,13 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory android:title="@string/web_server">
+        <EditTextPreference
+            android:defaultValue="8080"
+            android:icon="@drawable/ic_baseline_web_24"
+            android:key="port"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/server_port"
+            app:summary="@string/setting_port_summary" />
+    </PreferenceCategory>
+</PreferenceScreen>
