@@ -20,6 +20,7 @@ import fi.iki.elonen.router.RouterNanoHTTPD;
 import fi.iki.elonen.router.RouterNanoHTTPD.UriResource;
 
 import static com.example.smsotp.server.WebServer.gson;
+import static fi.iki.elonen.NanoHTTPD.MIME_PLAINTEXT;
 import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 
 public class ServerUtils {
@@ -110,7 +111,7 @@ public class ServerUtils {
 
     public abstract static class RestHandler implements RouterNanoHTTPD.UriResponder {
         protected static final String MIME_JSON = "application/json";
-        protected static String[] supportedMimeTypes = {"application/xml", "text/xml", MIME_JSON};
+        protected static final String[] supportedMimeTypes = {"application/xml", "text/xml", MIME_JSON};
         protected String dataFormat = MIME_JSON;
 
         @Override
@@ -152,14 +153,21 @@ public class ServerUtils {
         protected Response handleErrorRest(HttpError error) {
             String responseData = null;
             final String jsonString = gson.toJson(error);
-            if (dataFormat.equals(MIME_JSON)) {
-                responseData = jsonString;
-            } else {
-                try {
-                    responseData = XML.toString(new JSONObject(jsonString), "error");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+            switch (dataFormat) {
+                case MIME_JSON:
+                    responseData = jsonString;
+                    break;
+                case "text/xml":
+                case "application/xml":
+                    try {
+                        responseData = XML.toString(new JSONObject(jsonString), "error");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                default:
+                    // In case we don't support the type the client requested
+                    return newFixedLengthResponse(Response.Status.NOT_ACCEPTABLE, MIME_PLAINTEXT, null);
             }
             return newFixedLengthResponse(error.status, dataFormat, responseData);
         }
