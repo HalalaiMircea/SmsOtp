@@ -38,7 +38,7 @@ public class StatusViewModel extends AndroidViewModel {
     private MutableLiveData<String> wifiIpLiveData = new MutableLiveData<>();
     private LiveData<Boolean> serverStateLiveData = WebService.isRunning;
     private MutableLiveData<String> serverPort;
-    private String databaseName;
+    private String databasePath;
 
     public StatusViewModel(@NonNull Application application) {
         super(application);
@@ -52,7 +52,7 @@ public class StatusViewModel extends AndroidViewModel {
         };
         sharedPrefs.registerOnSharedPreferenceChangeListener(prefsChangeListener);
         serverPort = new MutableLiveData<>(sharedPrefs.getString(SettingsFragment.KEY_PREF_PORT, "8080"));
-        databaseName = AppDatabase.getInstance(application).getOpenHelper().getDatabaseName();
+        databasePath = AppDatabase.getInstance(application).getOpenHelper().getWritableDatabase().getPath();
     }
 
     public LiveData<String> getIpLiveData() {
@@ -63,8 +63,8 @@ public class StatusViewModel extends AndroidViewModel {
         return serverStateLiveData;
     }
 
-    public String getDatabaseName() {
-        return databaseName;
+    public String getDatabasePath() {
+        return databasePath;
     }
 
     public LiveData<String> getServerPort() {

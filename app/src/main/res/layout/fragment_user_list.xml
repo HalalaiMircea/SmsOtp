@@ -5,6 +5,7 @@
     android:name="com.example.smsotp.ui.main.UserFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorViewPagerBg"
     android:clipToPadding="false"
     android:padding="4dp"
     tools:context=".ui.UserListFragment"
