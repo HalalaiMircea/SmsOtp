@@ -48,7 +48,7 @@ public class ServerUtils {
     }
 
     /**
-     * POJO to reduce bloat in important handlers
+     * Object to reduce bloat in important handlers
      */
     public static class HttpError {
         public Response.Status status;
@@ -112,7 +112,7 @@ public class ServerUtils {
     public abstract static class RestHandler implements RouterNanoHTTPD.UriResponder {
         protected static final String MIME_JSON = "application/json";
         protected static final String[] supportedMimeTypes = {"application/xml", "text/xml", MIME_JSON};
-        protected String dataFormat = MIME_JSON;
+        protected String acceptedMimeType = MIME_JSON;
 
         @Override
         public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
@@ -143,33 +143,29 @@ public class ServerUtils {
         protected Response defaultResponse(IHTTPSession session) {
             final String acceptHeader = session.getHeaders().get("accept");
             if (acceptHeader != null) {
-                dataFormat = MIMEParse.bestMatch(Arrays.asList(supportedMimeTypes), acceptHeader);
+                acceptedMimeType = MIMEParse.bestMatch(Arrays.asList(supportedMimeTypes), acceptHeader);
             }
             HttpError error = new HttpError(Response.Status.METHOD_NOT_ALLOWED,
                     session.getUri(), null, "This Method is not supported!");
-            return handleErrorRest(error);
+            return handleHttpError(error);
         }
 
-        protected Response handleErrorRest(HttpError error) {
-            String responseData = null;
-            final String jsonString = gson.toJson(error);
-            switch (dataFormat) {
+        protected Response handleHttpError(HttpError error) {
+            switch (acceptedMimeType) {
                 case MIME_JSON:
-                    responseData = jsonString;
-                    break;
+                    return newFixedLengthResponse(error.status, acceptedMimeType, gson.toJson(error));
                 case "text/xml":
                 case "application/xml":
                     try {
-                        responseData = XML.toString(new JSONObject(jsonString), "error");
+                        return newFixedLengthResponse(error.status, acceptedMimeType,
+                                XML.toString(new JSONObject(gson.toJson(error)), "error"));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                    break;
                 default:
-                    // In case we don't support the type the client requested
+                    // In case we don't support the type requested by client
                     return newFixedLengthResponse(Response.Status.NOT_ACCEPTABLE, MIME_PLAINTEXT, null);
             }
-            return newFixedLengthResponse(error.status, dataFormat, responseData);
         }
     }
 }

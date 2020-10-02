@@ -14,7 +14,7 @@ import fi.iki.elonen.router.RouterNanoHTTPD.UriResource;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
-import static fi.iki.elonen.NanoHTTPD.mimeTypes;
+import static fi.iki.elonen.NanoHTTPD.MIME_PLAINTEXT;
 import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 
 public class IndexHandler extends ServerUtils.HtmlHandler {
@@ -32,8 +32,7 @@ public class IndexHandler extends ServerUtils.HtmlHandler {
             return newFixedLengthResponse(out.toString());
         } catch (IOException | TemplateException e) {
             e.printStackTrace();
-            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, mimeTypes().get("txt"),
-                    e.getMessage());
+            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, e.getMessage());
         }
     }
 }

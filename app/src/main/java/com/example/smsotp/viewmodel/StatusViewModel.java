@@ -11,6 +11,7 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -23,17 +24,14 @@ import com.example.smsotp.ui.SettingsFragment;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.ByteOrder;
-
-import static android.content.Context.WIFI_SERVICE;
+import java.util.Objects;
 
 public class StatusViewModel extends AndroidViewModel {
     private static final String TAG = "StatusViewModel";
     // Data providers
-    private final WifiStateReceiver receiver = new WifiStateReceiver();
+    private final BroadcastReceiver receiver = new WifiStateReceiver();
     private final OnSharedPreferenceChangeListener prefsChangeListener;
     private final SharedPreferences sharedPrefs;
-
     // LiveData
     private MutableLiveData<String> wifiIpLiveData = new MutableLiveData<>();
     private LiveData<Boolean> serverStateLiveData = WebService.isRunning;
@@ -78,29 +76,24 @@ public class StatusViewModel extends AndroidViewModel {
     }
 
     private class WifiStateReceiver extends BroadcastReceiver {
+        WifiManager wifiManager = ContextCompat.getSystemService(getApplication(), WifiManager.class);
+
         @Override
         public void onReceive(Context context, Intent intent) {
-            NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-            assert networkInfo != null;
-            wifiIpLiveData.setValue(networkInfo.isConnected() ? getWifiIPAddress() : "0.0.0.0");
-        }
-
-        private String getWifiIPAddress() {
-            WifiManager wifiManager =
-                    (WifiManager) getApplication().getApplicationContext().getSystemService(WIFI_SERVICE);
-            int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
-
-            // Convert little-endian to big-endian if needed
-            if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
-                ipAddress = Integer.reverseBytes(ipAddress);
+            NetworkInfo networkInfo = Objects.requireNonNull(
+                    intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO)
+            );
+            String ipAddress = "0.0.0.0";
+            if (networkInfo.isConnected()) {
+                int ipAddressInt = Integer.reverseBytes(wifiManager.getConnectionInfo().getIpAddress());
+                byte[] ipByteArray = BigInteger.valueOf(ipAddressInt).toByteArray();
+                try {
+                    ipAddress = InetAddress.getByAddress(ipByteArray).getHostAddress();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
             }
-            byte[] ipByteArray = BigInteger.valueOf(ipAddress).toByteArray();
-
-            try {
-                return InetAddress.getByAddress(ipByteArray).getHostAddress();
-            } catch (UnknownHostException ex) {
-                return "0.0.0.0";
-            }
+            wifiIpLiveData.setValue(ipAddress);
         }
     }
 }

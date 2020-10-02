@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
@@ -34,11 +35,12 @@ public class WebService extends Service {
     }
 
     private void startServer() {
+        final SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         String portStr = Objects.requireNonNull(
-                PreferenceManager.getDefaultSharedPreferences(this)
-                        .getString(SettingsFragment.KEY_PREF_PORT, "8080")
-        );
-        webServer = new WebServer(this, Integer.parseInt(portStr));
+                sharedPrefs.getString(SettingsFragment.KEY_PREF_PORT, "8080"));
+        String subIdStr = Objects.requireNonNull(
+                sharedPrefs.getString(SettingsFragment.KEY_PREF_SIM, "0"));
+        webServer = new WebServer(this, Integer.parseInt(portStr), Integer.parseInt(subIdStr));
         try {
             webServer.start();
             Log.i(TAG, "Web Service started!");

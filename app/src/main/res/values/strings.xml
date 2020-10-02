@@ -27,6 +27,7 @@
     <string name="sms_permission_rationale">Permit the app to send SMS so the REST API can function.</string>
     <string name="server_port">Server Port</string>
     <string name="setting_port_summary">The port on which the server will run</string>
-    <string name="pref_port_warning">Stop the server before changing the port!</string>
+    <string name="pref_server_warning">Stop the server before changing this setting!</string>
     <string name="sqlite" translatable="false">SQLite</string>
+    <string name="setting_sim_summary">The SIM card the server should use</string>
 </resources>

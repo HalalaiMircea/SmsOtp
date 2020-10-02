@@ -46,7 +46,6 @@ public abstract class AppDatabase extends RoomDatabase {
                         }
                     })
                     .build();
-            Log.i(TAG, "DB location=" + instance.getOpenHelper().getWritableDatabase().getPath());
             return instance;
         }
     }

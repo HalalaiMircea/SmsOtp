@@ -1,6 +1,8 @@
 package com.example.smsotp.server;
 
 import android.content.Context;
+import android.os.Build;
+import android.telephony.SmsManager;
 import android.util.Log;
 
 import com.example.smsotp.AppDatabase;
@@ -28,6 +30,7 @@ public class WebServer extends RouterNanoHTTPD {
     public static Configuration freemarkerCfg;
     public static Gson gson;
     public static AppDatabase database;
+    public static SmsManager smsManager;
 
     static {
         mimeTypes().put("json", "application/json");
@@ -36,9 +39,14 @@ public class WebServer extends RouterNanoHTTPD {
 
     private Context context;
 
-    public WebServer(Context context, int port) {
+    public WebServer(Context context, int port, int smsSubId) {
         super(port);
         WebServer.database = AppDatabase.getInstance(context);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            smsManager = SmsManager.getSmsManagerForSubscriptionId(smsSubId);
+        } else smsManager = SmsManager.getDefault();
+        Log.e(TAG, "WebServer: " + smsSubId);
+
         this.context = context;
 
         Log.i(TAG, "Configuration time: " + configure());

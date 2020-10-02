@@ -12,6 +12,7 @@ import android.util.Log;
 import com.example.smsotp.model.Command;
 import com.example.smsotp.server.ServerUtils;
 import com.example.smsotp.server.ServerUtils.HttpError;
+import com.example.smsotp.server.WebServer;
 
 import org.json.JSONObject;
 import org.json.XML;
@@ -36,31 +37,35 @@ public class ApiHandler extends ServerUtils.RestHandler {
     @SuppressWarnings("ConstantConditions")
     @Override
     public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        super.post(uriResource, urlParams, session);
+        Response response = super.post(uriResource, urlParams, session);
+        // In case we don't support the type requested by client, forward the response
+        if (response.getStatus() == Response.Status.NOT_ACCEPTABLE)
+            return response;
+
         Map<String, List<String>> params = session.getParameters();
         context = uriResource.initParameter(Context.class);
-        Log.d(TAG, "Accepted MIME type: " + dataFormat);
+        Log.d(TAG, "Accepted MIME type: " + acceptedMimeType);
 
-        List<String> usernameParam = params.get(Keys.USERNAME);
-        List<String> passwordParam = params.get(Keys.PASSWORD);
+        List<String> usernameParam = params.get(Key.USERNAME);
+        List<String> passwordParam = params.get(Key.PASSWORD);
         try {
             // We check if the request misses any credential
             ServerUtils.validateParams(usernameParam, passwordParam);
             // If returned password string is null, username doesn't exist
             String password = database.userDao().getPasswordByUsername(usernameParam.get(0));
             if (password == null || !password.equals(passwordParam.get(0)))
-                return handleErrorRest(new HttpError(Response.Status.UNAUTHORIZED,
+                return handleHttpError(new HttpError(Response.Status.UNAUTHORIZED,
                         session.getUri(), null, "Incorrect username and/or password!"));
         } catch (IllegalArgumentException e) {
-            return handleErrorRest(new HttpError(Response.Status.UNAUTHORIZED, session.getUri(),
+            return handleHttpError(new HttpError(Response.Status.UNAUTHORIZED, session.getUri(),
                     null, "Missing username or password parameters!"));
         }
 
         try {
-            ServerUtils.validateParams(params.get(Keys.MESSAGE));
-            ServerUtils.validatePhones(params.get(Keys.PHONES));
+            ServerUtils.validateParams(params.get(Key.MESSAGE));
+            ServerUtils.validatePhones(params.get(Key.PHONES));
 
-            JSONObject jsonParams = sendManySms(params.get(Keys.PHONES), params.get(Keys.MESSAGE).get(0));
+            JSONObject jsonParams = sendManySms(params.get(Key.PHONES), params.get(Key.MESSAGE).get(0));
             int userId = database.userDao().getIdByUsername(usernameParam.get(0));
             Command command = new Command(userId, jsonParams.toString(), new Date());
             int commId = (int) database.commandDao().insert(command);
@@ -68,15 +73,15 @@ public class ApiHandler extends ServerUtils.RestHandler {
             JSONObject jsonResponse = jsonParams
                     .put("commandId", commId)
                     .put("userId", userId);
-            return newFixedLengthResponse(Response.Status.OK, dataFormat,
-                    dataFormat.equals(MIME_JSON) ? jsonResponse.toString() :
+            return newFixedLengthResponse(Response.Status.OK, acceptedMimeType,
+                    acceptedMimeType.equals(MIME_JSON) ? jsonResponse.toString() :
                             XML.toString(jsonResponse, "root"));
         } catch (IllegalArgumentException e) {
-            return handleErrorRest(new HttpError(Response.Status.BAD_REQUEST,
+            return handleHttpError(new HttpError(Response.Status.BAD_REQUEST,
                     session.getUri(), null, "Missing or invalid message and/or phones parameters!"));
         } catch (Exception e) {
             e.printStackTrace();
-            return handleErrorRest(new HttpError(Response.Status.INTERNAL_ERROR, session.getUri(), e, null));
+            return handleHttpError(new HttpError(Response.Status.INTERNAL_ERROR, session.getUri(), e, null));
         }
     }
 
@@ -102,9 +107,8 @@ public class ApiHandler extends ServerUtils.RestHandler {
         SentSmsReceiver receiver = new SentSmsReceiver(phones.size());
         context.registerReceiver(receiver, filter);
 
-        SmsManager smsManager = SmsManager.getDefault();
         for (int i = 0; i < phones.size(); i++)
-            smsManager.sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
+            WebServer.smsManager.sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
         // Wait until we have all results
         while (receiver.resultTypes.contains(null)) {
             Thread.sleep(100);
@@ -113,9 +117,9 @@ public class ApiHandler extends ServerUtils.RestHandler {
         Log.d(TAG, "SENT_SMS Result: " + receiver.resultTypes);
         context.unregisterReceiver(receiver);   // Prevent memory leak
 
-        JSONObject json = new JSONObject().put(Keys.MESSAGE, msg);
+        JSONObject json = new JSONObject().put(Key.MESSAGE, msg);
         for (int i = 0; i < phones.size(); i++) {
-            json.accumulate(Keys.RESULTS, new JSONObject()
+            json.accumulate(Key.RESULTS, new JSONObject()
                     .put("phone", phones.get(i))
                     .put("status", receiver.resultTypes.get(i)));
         }
@@ -164,7 +168,7 @@ public class ApiHandler extends ServerUtils.RestHandler {
         }
     }
 
-    private static class Keys {
+    private static class Key {
         static final String PHONES = "phones";
         static final String MESSAGE = "message";
         static final String USERNAME = "username";

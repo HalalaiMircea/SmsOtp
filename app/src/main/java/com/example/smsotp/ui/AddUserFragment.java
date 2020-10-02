@@ -9,12 +9,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -34,6 +36,7 @@ public class AddUserFragment extends Fragment {
     private UserViewModel viewModel;
     private AppCompatActivity activity;
     private EditText userEditText, passEditText;
+    private InputMethodManager imm;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -46,7 +49,7 @@ public class AddUserFragment extends Fragment {
             viewModel = new ViewModelProvider(this).get(UserViewModel.class);
             viewModel.init(userId);
         }
-
+        imm = ContextCompat.getSystemService(activity, InputMethodManager.class);
         setHasOptionsMenu(true);
     }
 
@@ -59,9 +62,9 @@ public class AddUserFragment extends Fragment {
 
         Toolbar toolbar = binding.include.toolbar;
         activity.setSupportActionBar(toolbar);
-        toolbar.setTitle("");
+        toolbar.setTitle(null);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
-        toolbar.setNavigationOnClickListener(v -> findNavController(v).navigateUp());
+        toolbar.setNavigationOnClickListener(this::navigateUp);
 
         // If we came here from action_editUser (i.e. if viewModel is attached)
         if (viewModel != null) {
@@ -69,18 +72,21 @@ public class AddUserFragment extends Fragment {
                 userEditText.setText(user.username);
                 passEditText.setText(user.password);
             });
+        } else {
+            userEditText.requestFocus();
+            userEditText.postDelayed(() -> imm.showSoftInput(userEditText, InputMethodManager.SHOW_FORCED),
+                    100);
         }
         return binding.getRoot();
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.menu_add_user, menu);
         // We change item's title to make sense when updating user's data
         int titleRes = viewModel != null ? R.string.save_changes : R.string.create_user;
         menu.findItem(R.id.save_user).setTitle(titleRes);
-
-        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
@@ -100,7 +106,7 @@ public class AddUserFragment extends Fragment {
                         } else {// Else we entered from existing userEditAction
                             viewModel.updateUser(userText, passText);
                         }
-                        activity.onBackPressed();
+                        navigateUp(requireView());
                     } catch (SQLiteConstraintException ex) {
                         Log.e(TAG, Objects.requireNonNull(ex.getMessage()));
                         activity.runOnUiThread(() -> binding.userField.setError("Username already taken!"));
@@ -110,6 +116,11 @@ public class AddUserFragment extends Fragment {
             return true;
         }
         return false;
+    }
+
+    private void navigateUp(View v) {
+        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+        findNavController(v).navigateUp();
     }
 
     private boolean validateInputs(String userText, String passText) {

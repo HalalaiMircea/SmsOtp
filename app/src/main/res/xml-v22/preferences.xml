@@ -8,5 +8,9 @@
             android:singleLine="true"
             android:summary="@string/setting_port_summary"
             android:title="@string/server_port" />
+        <ListPreference
+            android:key="sim"
+            android:summary="@string/setting_sim_summary"
+            android:title="SIM" />
     </PreferenceCategory>
 </PreferenceScreen>
