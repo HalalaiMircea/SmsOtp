@@ -45,7 +45,6 @@ public class WebServer extends RouterNanoHTTPD {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             smsManager = SmsManager.getSmsManagerForSubscriptionId(smsSubId);
         } else smsManager = SmsManager.getDefault();
-        Log.e(TAG, "WebServer: " + smsSubId);
 
         this.context = context;
 

@@ -1,4 +1,5 @@
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory android:title="@string/web_server">
         <EditTextPreference
             android:defaultValue="8080"
@@ -11,6 +12,7 @@
         <ListPreference
             android:key="sim"
             android:summary="@string/setting_sim_summary"
-            android:title="SIM" />
+            android:title="SIM"
+            app:icon="@drawable/ic_baseline_sim_card_24" />
     </PreferenceCategory>
 </PreferenceScreen>

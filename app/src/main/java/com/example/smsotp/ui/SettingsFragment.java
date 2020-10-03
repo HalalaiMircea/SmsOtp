@@ -1,11 +1,13 @@
 package com.example.smsotp.ui;
 
+import android.app.AlertDialog;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.text.InputType;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -28,7 +30,9 @@ import static androidx.core.content.ContextCompat.getSystemService;
 public class SettingsFragment extends PreferenceFragmentCompat {
     public static final String KEY_PREF_PORT = "port";
     public static final String KEY_PREF_SIM = "sim";
+    private static final String TAG = "SettingsFragment";
     private static final int PERMISSION_REQUEST = 12;
+    private ListPreference subscriptionPref;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -40,47 +44,69 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
         // This option is only available for API >= 22 as the Dual-SIM API was added in this version
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            ListPreference subPref = Objects.requireNonNull(findPreference(KEY_PREF_SIM));
-            subPref.setOnPreferenceClickListener(this::onSimPrefClicked);
-            subPref.setOnPreferenceChangeListener(this::onServerPrefChanged);
+            subscriptionPref = Objects.requireNonNull(findPreference(KEY_PREF_SIM));
+            subscriptionPref.setOnPreferenceChangeListener(this::onServerPrefChanged);
+            populateSubscriptionList();
         }
     }
 
     private boolean onServerPrefChanged(Preference preference, Object newValue) {
-        boolean isRunning = Objects.requireNonNull(WebService.isRunning.getValue());
-        if (isRunning) {
+        Boolean isRunning = WebService.isRunning.getValue();
+        if (isRunning != null && isRunning) {
             Toast.makeText(getContext(), R.string.pref_server_warning, Toast.LENGTH_LONG).show();
             return false;
+        }
+        if (preference.getKey().equals(KEY_PREF_PORT)) {
+            int port = Integer.parseInt((String) newValue);
+            if (port < 0 || port > 0xFFFF) {
+                Toast.makeText(getContext(), R.string.pref_port_warning, Toast.LENGTH_LONG).show();
+                return false;
+            }
         }
         return true;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP_MR1)
-    private boolean onSimPrefClicked(Preference preference) {
-        SubscriptionManager subManager = getSystemService(requireContext(), SubscriptionManager.class);
-        if (checkSelfPermission(requireContext(), READ_PHONE_STATE) == PackageManager.PERMISSION_DENIED) {
-            requestPermissions(new String[]{READ_PHONE_STATE}, PERMISSION_REQUEST);
-        } else {
+    private void populateSubscriptionList() {
+        if (checkSelfPermission(requireContext(), READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+            SubscriptionManager subManager = getSystemService(requireContext(), SubscriptionManager.class);
             assert subManager != null;
-            final List<SubscriptionInfo> activeSubInfoList = subManager.getActiveSubscriptionInfoList();
-            CharSequence[] entries = new CharSequence[activeSubInfoList.size()];
-            CharSequence[] entryValues = new CharSequence[activeSubInfoList.size()];
-            for (int i = 0; i < activeSubInfoList.size(); i++) {
-                SubscriptionInfo subInfo = activeSubInfoList.get(i);
+            List<SubscriptionInfo> subscriptionsInfo = subManager.getActiveSubscriptionInfoList();
+            CharSequence[] entries = new CharSequence[subscriptionsInfo.size()];
+            CharSequence[] entryValues = new CharSequence[subscriptionsInfo.size()];
+            for (int i = 0; i < subscriptionsInfo.size(); i++) {
+                SubscriptionInfo subInfo = subscriptionsInfo.get(i);
                 entries[i] = subInfo.getDisplayName();
                 entryValues[i] = Integer.toString(subInfo.getSubscriptionId());
             }
-            ((ListPreference) preference).setEntries(entries);
-            ((ListPreference) preference).setEntryValues(entryValues);
+            subscriptionPref.setEntries(entries);
+            subscriptionPref.setEntryValues(entryValues);
+        } else if (shouldShowRequestPermissionRationale(READ_PHONE_STATE)) {
+            new AlertDialog.Builder(getContext())
+                    .setMessage(R.string.settings_rationale)
+                    .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                        requestPermissions(new String[]{READ_PHONE_STATE}, PERMISSION_REQUEST);
+                    })
+                    .show();
+            subscriptionPref.setEnabled(false);
+        } else {
+            requestPermissions(new String[]{READ_PHONE_STATE}, PERMISSION_REQUEST);
         }
-        return true;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP_MR1)
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST) {
-            //TODO handle permission denial!
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, "Permission " + permissions[0] + " granted by user!");
+                populateSubscriptionList();
+                subscriptionPref.setEnabled(true);
+            } else {
+                Log.e(TAG, "Permission " + permissions[0] + " denied by user!");
+                subscriptionPref.setEnabled(false);
+            }
         }
     }
 }
