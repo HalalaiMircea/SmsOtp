@@ -66,7 +66,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         return true;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP_MR1)
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private void populateSubscriptionList() {
         if (checkSelfPermission(requireContext(), READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
             SubscriptionManager subManager = getSystemService(requireContext(), SubscriptionManager.class);
@@ -94,7 +94,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP_MR1)
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {

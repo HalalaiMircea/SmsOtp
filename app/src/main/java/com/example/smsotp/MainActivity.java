@@ -31,36 +31,36 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(ActivityMainBinding.inflate(getLayoutInflater()).getRoot());
 
-        loadDefaultSharedPrefsOnFirstBoot();
+        loadDefaultPreferencesOnFirstBoot();
 
-        if (BuildConfig.DEBUG)
+        if (BuildConfig.DEBUG) {
+            final String msg;
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)
                     == PackageManager.PERMISSION_GRANTED) {
-                Log.d(TAG, "Server started automatically in debug build variant!");
+                msg = "Server started automatically in debug build variant!";
                 startService(new Intent(this, WebService.class));
-            } else {
-                final String msg = "Please grant SEND_SMS permission to start server automatically";
-                Log.d(TAG, msg);
-                Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-            }
+            } else msg = "Please grant SEND_SMS permission to start server automatically";
+            Log.d(TAG, msg);
+            Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+        }
     }
 
-    private void loadDefaultSharedPrefsOnFirstBoot() {
+    private void loadDefaultPreferencesOnFirstBoot() {
         final SharedPreferences isDefaultSetSP = this.getSharedPreferences(
                 KEY_HAS_SET_DEFAULT_VALUES, Context.MODE_PRIVATE);
-        // We programmatically set the SIM id in our app's default SharedPrefs file
         if (!isDefaultSetSP.getBoolean(KEY_HAS_SET_DEFAULT_VALUES, false)) {
             SharedPreferences defaultAppSp = PreferenceManager.getDefaultSharedPreferences(this);
-            final String defaultSubID;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                defaultSubID = String.valueOf(SmsManager.getDefaultSmsSubscriptionId());
-            } else defaultSubID = "0";
-            defaultAppSp.edit()
-                    .putString(SettingsFragment.KEY_PREF_SIM, defaultSubID)
-                    .apply();
-            // We set the rest of defaults from preferences.xml
-            // Be careful not to override our programmatic default from above!
+            // Load the defaults from xml INSIDE this if block because the function modifies the
+            // KEY_HAS_SET_DEFAULT_VALUES file to true
             PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+
+            // We programmatically put the SIM id in our app's default SharedPrefs file
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                final String defaultSubID = String.valueOf(SmsManager.getDefaultSmsSubscriptionId());
+                defaultAppSp.edit()
+                        .putString(SettingsFragment.KEY_PREF_SIM, defaultSubID)
+                        .apply();
+            }
             Log.i(TAG, "Loaded default prefs " + defaultAppSp.getAll());
         }
     }

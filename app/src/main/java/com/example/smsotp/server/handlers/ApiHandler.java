@@ -9,19 +9,15 @@ import android.content.IntentFilter;
 import android.telephony.SmsManager;
 import android.util.Log;
 
+import com.example.smsotp.WebService;
 import com.example.smsotp.model.Command;
 import com.example.smsotp.server.ServerUtils;
 import com.example.smsotp.server.ServerUtils.HttpError;
-import com.example.smsotp.server.WebServer;
 
 import org.json.JSONObject;
 import org.json.XML;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
@@ -108,7 +104,7 @@ public class ApiHandler extends ServerUtils.RestHandler {
         context.registerReceiver(receiver, filter);
 
         for (int i = 0; i < phones.size(); i++)
-            WebServer.smsManager.sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
+            WebService.getSmsManager().sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
         // Wait until we have all results
         while (receiver.resultTypes.contains(null)) {
             Thread.sleep(100);

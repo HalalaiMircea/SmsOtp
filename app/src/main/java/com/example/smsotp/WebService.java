@@ -1,14 +1,11 @@
 package com.example.smsotp;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
+import android.app.*;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.IBinder;
+import android.telephony.SmsManager;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -16,31 +13,43 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.preference.PreferenceManager;
 
 import com.example.smsotp.server.WebServer;
-import com.example.smsotp.ui.SettingsFragment;
 
 import java.io.IOException;
-import java.util.Objects;
 
+import static com.example.smsotp.ui.SettingsFragment.KEY_PREF_PORT;
+import static com.example.smsotp.ui.SettingsFragment.KEY_PREF_SIM;
+
+@SuppressWarnings("ConstantConditions")
 public class WebService extends Service {
     private static final String TAG = "SMSOTP_WebService";
     public static MutableLiveData<Boolean> isRunning = new MutableLiveData<>();
+    private static SmsManager smsManager;
     private WebServer webServer;
+    private SharedPreferences sharedPrefs;
+
+    public static SmsManager getSmsManager() {
+        return smsManager;
+    }
 
     @Override
     public void onCreate() {
         isRunning.setValue(true);
+        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         startForeground(1, createNotification());
+
+        // Acquire the right SmsManager for the current Android version
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            int subId = Integer.parseInt(sharedPrefs.getString(KEY_PREF_SIM, "0"));
+            smsManager = SmsManager.getSmsManagerForSubscriptionId(subId);
+        } else smsManager = SmsManager.getDefault();
+
         // Create and start the webServer on a background thread so we don't block the UI thread
-        new Thread(this::startServer).start();
+        new Thread(this::runServer).start();
     }
 
-    private void startServer() {
-        final SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String portStr = Objects.requireNonNull(
-                sharedPrefs.getString(SettingsFragment.KEY_PREF_PORT, "8080"));
-        String subIdStr = Objects.requireNonNull(
-                sharedPrefs.getString(SettingsFragment.KEY_PREF_SIM, "0"));
-        webServer = new WebServer(this, Integer.parseInt(portStr), Integer.parseInt(subIdStr));
+    private void runServer() {
+        int port = Integer.parseInt(sharedPrefs.getString(KEY_PREF_PORT, "8080"));
+        webServer = new WebServer(this, port);
         try {
             webServer.start();
             Log.i(TAG, "Web Service started!");

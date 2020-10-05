@@ -1,11 +1,7 @@
 package com.example.smsotp.viewmodel;
 
 import android.app.Application;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;

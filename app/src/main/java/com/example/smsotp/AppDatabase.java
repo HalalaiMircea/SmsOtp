@@ -4,11 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.room.Database;
-import androidx.room.Room;
-import androidx.room.RoomDatabase;
-import androidx.room.TypeConverter;
-import androidx.room.TypeConverters;
+import androidx.room.*;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.smsotp.model.Command;
