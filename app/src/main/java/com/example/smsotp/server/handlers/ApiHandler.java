@@ -30,7 +30,6 @@ public class ApiHandler extends ServerUtils.RestHandler {
     private static final String TAG = "Web_ApiHandler";
     private Context context;
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
         Response response = super.post(uriResource, urlParams, session);

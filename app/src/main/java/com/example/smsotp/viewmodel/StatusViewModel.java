@@ -29,10 +29,10 @@ public class StatusViewModel extends AndroidViewModel {
     private final OnSharedPreferenceChangeListener prefsChangeListener;
     private final SharedPreferences sharedPrefs;
     // LiveData
-    private MutableLiveData<String> wifiIpLiveData = new MutableLiveData<>();
-    private LiveData<Boolean> serverStateLiveData = WebService.isRunning;
+    private final MutableLiveData<String> wifiIpLiveData = new MutableLiveData<>();
+    private final LiveData<Boolean> serverStateLiveData = WebService.isRunning;
     private MutableLiveData<String> serverPort;
-    private String databasePath;
+    private final String databasePath;
 
     public StatusViewModel(@NonNull Application application) {
         super(application);

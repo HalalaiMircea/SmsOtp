@@ -22,7 +22,7 @@ import com.google.android.material.tabs.TabLayoutMediator;
 public class MainFragment extends Fragment {
     private static final String TAG = "SMSOTP_MainFragment";
     private FragmentMainBinding binding;
-    private ViewPager2.OnPageChangeCallback pageChangeCallback = new ViewPager2.OnPageChangeCallback() {
+    private final ViewPager2.OnPageChangeCallback pageChangeCallback = new ViewPager2.OnPageChangeCallback() {
         @Override
         public void onPageSelected(int position) {
             if (position == 0) binding.fab.hide();
@@ -82,7 +82,7 @@ public class MainFragment extends Fragment {
     private static class SectionsPagerAdapter extends FragmentStateAdapter {
         @StringRes
         private static final int[] TAB_TITLES = {R.string.status, R.string.users, R.string.statistics};
-        private Fragment[] fragments;
+        private final Fragment[] fragments;
 
         public SectionsPagerAdapter(Fragment frag) {
             super(frag);

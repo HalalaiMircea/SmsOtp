@@ -87,7 +87,7 @@ public class UserListFragment extends Fragment {
 
     private static class ViewHolder extends RecyclerView.ViewHolder {
         private int userId;
-        private UserListItemBinding binding;
+        private final UserListItemBinding binding;
 
         public ViewHolder(UserListItemBinding binding) {
             super(binding.getRoot());

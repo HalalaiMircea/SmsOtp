@@ -19,7 +19,6 @@ import java.io.IOException;
 import static com.example.smsotp.ui.SettingsFragment.KEY_PREF_PORT;
 import static com.example.smsotp.ui.SettingsFragment.KEY_PREF_SIM;
 
-@SuppressWarnings("ConstantConditions")
 public class WebService extends Service {
     private static final String TAG = "SMSOTP_WebService";
     public static MutableLiveData<Boolean> isRunning = new MutableLiveData<>();

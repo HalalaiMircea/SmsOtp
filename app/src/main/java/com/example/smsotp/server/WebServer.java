@@ -62,6 +62,7 @@ public class WebServer extends RouterNanoHTTPD {
                 return newFixedLengthResponse(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
             }
         }
+        Log.e(TAG, "serve: " + files);
         return super.serve(session);
     }
 

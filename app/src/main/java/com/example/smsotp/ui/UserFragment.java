@@ -92,7 +92,7 @@ public class UserFragment extends Fragment {
     }
 
     public static class DeleteDialog extends DialogFragment {
-        private UserViewModel viewModel;
+        private final UserViewModel viewModel;
 
         public DeleteDialog(UserViewModel viewModel) {
             this.viewModel = viewModel;

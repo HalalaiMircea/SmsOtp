@@ -36,8 +36,8 @@ public class MainViewModel extends AndroidViewModel {
     }
 
     public static class UserItem {
-        private int id;
-        private String username;
+        private final int id;
+        private final String username;
 
         public UserItem(int id, String username) {
             this.id = id;
