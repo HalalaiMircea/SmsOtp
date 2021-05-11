@@ -24,14 +24,17 @@ public class Command {
 
     public int userId;
 
-    public String jsonParams;
+    public String message;
+
+    public String phoneResults;
 
     @NonNull
     public Date executedDate;
 
-    public Command(int userId, String jsonParams, @NonNull Date executedDate) {
+    public Command(int userId, String message, String phoneResults, @NonNull Date executedDate) {
         this.userId = userId;
-        this.jsonParams = jsonParams;
+        this.message = message;
+        this.phoneResults = phoneResults;
         this.executedDate = Objects.requireNonNull(executedDate);
     }
 
@@ -41,7 +44,7 @@ public class Command {
         return "Command{" +
                 "id=" + id +
                 ", userId=" + userId +
-                ", jsonParams='" + jsonParams + '\'' +
+                ", phoneResults='" + phoneResults + '\'' +
                 ", executedDate=" + executedDate +
                 '}';
     }

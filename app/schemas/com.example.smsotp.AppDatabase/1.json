@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "fe17264a98766c2df688cf5b128cb189",
+    "identityHash": "33c0a36b7e7e028e5bbbd59ce333ab73",
     "entities": [
       {
         "tableName": "User",
@@ -47,7 +47,7 @@
       },
       {
         "tableName": "Command",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` INTEGER NOT NULL, `jsonParams` TEXT, `executedDate` INTEGER NOT NULL, FOREIGN KEY(`userId`) REFERENCES `User`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` INTEGER NOT NULL, `message` TEXT, `phoneResults` TEXT, `executedDate` INTEGER NOT NULL, FOREIGN KEY(`userId`) REFERENCES `User`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -62,8 +62,14 @@
             "notNull": true
           },
           {
-            "fieldPath": "jsonParams",
-            "columnName": "jsonParams",
+            "fieldPath": "message",
+            "columnName": "message",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "phoneResults",
+            "columnName": "phoneResults",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -108,7 +114,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fe17264a98766c2df688cf5b128cb189')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '33c0a36b7e7e028e5bbbd59ce333ab73')"
     ]
   }
 }

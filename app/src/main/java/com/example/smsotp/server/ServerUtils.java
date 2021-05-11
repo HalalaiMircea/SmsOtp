@@ -140,6 +140,10 @@ public class ServerUtils {
             return defaultResponse(session);
         }
 
+        protected Object postGson(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
+            return defaultResponse(session);
+        }
+
         protected Response defaultResponse(IHTTPSession session) {
             final String acceptHeader = session.getHeaders().get("accept");
             if (acceptHeader != null) {
@@ -148,6 +152,10 @@ public class ServerUtils {
             HttpError error = new HttpError(Response.Status.METHOD_NOT_ALLOWED,
                     session.getUri(), null, "This Method is not supported!");
             return handleHttpError(error);
+        }
+
+        protected Response handleHttpError(Response.Status status, String uri, Exception exception, String description) {
+            return handleHttpError(new HttpError(status, uri, exception, description));
         }
 
         protected Response handleHttpError(HttpError error) {
