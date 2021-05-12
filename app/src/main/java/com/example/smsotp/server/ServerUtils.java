@@ -140,38 +140,34 @@ public class ServerUtils {
             return defaultResponse(session);
         }
 
-        protected Object postGson(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return defaultResponse(session);
-        }
-
         protected Response defaultResponse(IHTTPSession session) {
             final String acceptHeader = session.getHeaders().get("accept");
             if (acceptHeader != null) {
                 acceptedMimeType = MIMEParse.bestMatch(Arrays.asList(supportedMimeTypes), acceptHeader);
             }
-            HttpError error = new HttpError(Response.Status.METHOD_NOT_ALLOWED,
-                    session.getUri(), null, "This Method is not supported!");
-            return handleHttpError(error);
+            return newErrorResponse(Response.Status.METHOD_NOT_ALLOWED,
+                    session.getUri(), null, "This HTTP Method is not supported!");
         }
 
-        protected Response handleHttpError(Response.Status status, String uri, Exception exception, String description) {
-            return handleHttpError(new HttpError(status, uri, exception, description));
+        protected Response newErrorResponse(Response.Status status, String uri, Exception exception, String description) {
+            final HttpError error = new HttpError(status, uri, exception, description);
+            return newGsonResponse(error.status, error);
         }
 
-        protected Response handleHttpError(HttpError error) {
+        protected Response newGsonResponse(Response.IStatus status, Object obj) {
             switch (acceptedMimeType) {
                 case MIME_JSON:
-                    return newFixedLengthResponse(error.status, acceptedMimeType, gson.toJson(error));
+                    return newFixedLengthResponse(status, acceptedMimeType, gson.toJson(obj));
                 case "text/xml":
                 case "application/xml":
                     try {
-                        return newFixedLengthResponse(error.status, acceptedMimeType,
-                                XML.toString(new JSONObject(gson.toJson(error)), "error"));
+                        return newFixedLengthResponse(status, acceptedMimeType,
+                                XML.toString(new JSONObject(gson.toJson(obj)), "root"));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 default:
-                    // In case we don't support the type requested by client
+                    // In case we don't support the mimetype requested by client
                     return newFixedLengthResponse(Response.Status.NOT_ACCEPTABLE, MIME_PLAINTEXT, null);
             }
         }

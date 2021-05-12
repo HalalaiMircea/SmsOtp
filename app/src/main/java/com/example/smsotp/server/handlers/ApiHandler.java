@@ -1,21 +1,17 @@
 package com.example.smsotp.server.handlers;
 
-import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.telephony.SmsManager;
 import android.util.Log;
 
 import com.example.smsotp.WebService;
 import com.example.smsotp.model.Command;
 import com.example.smsotp.server.ServerUtils;
 import com.example.smsotp.server.dto.SmsDto;
-
-import org.json.JSONObject;
-import org.json.XML;
+import com.example.smsotp.server.dto.SmsResultType;
 
 import java.util.*;
 
@@ -25,7 +21,6 @@ import fi.iki.elonen.router.RouterNanoHTTPD.UriResource;
 
 import static com.example.smsotp.server.WebServer.database;
 import static com.example.smsotp.server.WebServer.gson;
-import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 
 public class ApiHandler extends ServerUtils.RestHandler {
     private static final String TAG = "Web_ApiHandler";
@@ -50,11 +45,11 @@ public class ApiHandler extends ServerUtils.RestHandler {
             // If returned password string is null, username doesn't exist
             String password = database.userDao().getPasswordByUsername(usernameParam.get(0));
             if (password == null || !password.equals(passwordParam.get(0)))
-                return handleHttpError(Response.Status.UNAUTHORIZED,
+                return newErrorResponse(Response.Status.UNAUTHORIZED,
                         session.getUri(), null, "Incorrect username and/or password!");
         } catch (IllegalArgumentException e) {
-            return handleHttpError(Response.Status.UNAUTHORIZED, session.getUri(),
-                    null, "Missing username or password parameters!");
+            return newErrorResponse(Response.Status.UNAUTHORIZED, session.getUri(),
+                    e, "Missing username or password parameters!");
         }
 
         try {
@@ -68,15 +63,13 @@ public class ApiHandler extends ServerUtils.RestHandler {
             final int commId = (int) database.commandDao().insert(command);
             SmsDto reportDto = new SmsDto(commId, userId, msg, reportResults);
 
-            return newFixedLengthResponse(Response.Status.OK, acceptedMimeType,
-                    acceptedMimeType.equals(MIME_JSON) ? gson.toJson(reportDto) :
-                            XML.toString(new JSONObject(gson.toJson(reportDto)), "root"));
+            return newGsonResponse(Response.Status.OK, reportDto);
         } catch (IllegalArgumentException e) {
-            return handleHttpError(Response.Status.BAD_REQUEST,
-                    session.getUri(), null, "Missing or invalid message and/or phones parameters!");
+            return newErrorResponse(Response.Status.BAD_REQUEST,
+                    session.getUri(), e, "Missing or invalid message and/or phones parameters!");
         } catch (Exception e) {
             e.printStackTrace();
-            return handleHttpError(Response.Status.INTERNAL_ERROR, session.getUri(), e, null);
+            return newErrorResponse(Response.Status.INTERNAL_ERROR, session.getUri(), e, null);
         }
     }
 
@@ -117,32 +110,6 @@ public class ApiHandler extends ServerUtils.RestHandler {
             results.add(new SmsDto.Result(phones.get(i), receiver.resultTypes.get(i)));
         }
         return results;
-    }
-
-    public enum SmsResultType {
-        OK(Activity.RESULT_OK),
-        ERROR_GENERIC_FAILURE(SmsManager.RESULT_ERROR_GENERIC_FAILURE),
-        ERROR_NO_SERVICE(SmsManager.RESULT_ERROR_NO_SERVICE),
-        ERROR_NULL_PDU(SmsManager.RESULT_ERROR_NULL_PDU),
-        ERROR_RADIO_OFF(SmsManager.RESULT_ERROR_RADIO_OFF);
-
-        private final int code;
-
-        SmsResultType(int code) {
-            this.code = code;
-        }
-
-        public static SmsResultType lookup(int code) {
-            for (SmsResultType type : SmsResultType.values()) {
-                if (type.getCode() == code)
-                    return type;
-            }
-            return null;
-        }
-
-        public int getCode() {
-            return code;
-        }
     }
 
     private static class SentSmsReceiver extends BroadcastReceiver {

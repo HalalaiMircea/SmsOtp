@@ -1,7 +1,5 @@
 package com.example.smsotp.server.dto;
 
-import com.example.smsotp.server.handlers.ApiHandler;
-
 import java.util.List;
 
 public class SmsDto {
@@ -35,9 +33,9 @@ public class SmsDto {
 
     public static class Result {
         private final String phone;
-        private final ApiHandler.SmsResultType status;
+        private final SmsResultType status;
 
-        public Result(String phone, ApiHandler.SmsResultType status) {
+        public Result(String phone, SmsResultType status) {
             this.phone = phone;
             this.status = status;
         }
@@ -46,7 +44,7 @@ public class SmsDto {
             return phone;
         }
 
-        public ApiHandler.SmsResultType getStatus() {
+        public SmsResultType getStatus() {
             return status;
         }
     }
