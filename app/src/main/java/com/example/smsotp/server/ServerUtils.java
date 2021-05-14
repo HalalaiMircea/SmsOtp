@@ -2,6 +2,8 @@ package com.example.smsotp.server;
 
 import android.util.Patterns;
 
+import androidx.annotation.NonNull;
+
 import org.commonjava.mimeparse.MIMEParse;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -24,27 +26,25 @@ import static fi.iki.elonen.NanoHTTPD.MIME_PLAINTEXT;
 import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 
 public class ServerUtils {
-    public static void validatePhones(List<String> phones) throws IllegalArgumentException {
-        validateParams(phones);
+    @NonNull
+    public static List<String> validatePhones(List<String> phones) throws IllegalArgumentException {
+        phones = validateParam(phones);
         for (String phone : phones) {
             if (!Patterns.PHONE.matcher(phone).matches())
                 throw new IllegalArgumentException("One or multiple phone numbers are invalid");
         }
+        return phones;
     }
 
-    @SafeVarargs
-    public static void validateParams(List<String>... paramValues) throws IllegalArgumentException {
-        // If request query key for this value is missing
-        for (List<String> paramValue : paramValues) {
-            if (paramValue == null || paramValue.isEmpty())
-                throw new IllegalArgumentException("Request param is either null or empty");
-
-            // If any element is invalid
-            for (String value : paramValue) {
-                if (value == null || value.trim().isEmpty())
-                    throw new IllegalArgumentException("A parameter is blank");
-            }
+    @NonNull
+    public static List<String> validateParam(List<String> param) throws IllegalArgumentException {
+        if (param == null) throw new IllegalArgumentException("A parameter is missing");
+        // If any element is invalid
+        for (String value : param) {
+            if (value == null || value.trim().isEmpty())
+                throw new IllegalArgumentException("A parameter is blank");
         }
+        return param;
     }
 
     /**
@@ -140,21 +140,28 @@ public class ServerUtils {
             return defaultResponse(session);
         }
 
-        protected Response defaultResponse(IHTTPSession session) {
-            final String acceptHeader = session.getHeaders().get("accept");
-            if (acceptHeader != null) {
-                acceptedMimeType = MIMEParse.bestMatch(Arrays.asList(supportedMimeTypes), acceptHeader);
-            }
-            return newErrorResponse(Response.Status.METHOD_NOT_ALLOWED,
-                    session.getUri(), null, "This HTTP Method is not supported!");
+        protected Response ok(Object object) {
+            return newGsonResponse(Response.Status.OK, object);
         }
 
-        protected Response newErrorResponse(Response.Status status, String uri, Exception exception, String description) {
+        protected Response badRequest(String uri, Exception exception, String description) {
+            return newErrorResponse(Response.Status.BAD_REQUEST, uri, exception, description);
+        }
+
+        protected Response unauthorized(String uri, Exception exception, String description) {
+            return newErrorResponse(Response.Status.UNAUTHORIZED, uri, exception, description);
+        }
+
+        protected Response internalError(String uri, Exception exception, String description) {
+            return newErrorResponse(Response.Status.INTERNAL_ERROR, uri, exception, description);
+        }
+
+        private Response newErrorResponse(Response.Status status, String uri, Exception exception, String description) {
             final HttpError error = new HttpError(status, uri, exception, description);
             return newGsonResponse(error.status, error);
         }
 
-        protected Response newGsonResponse(Response.IStatus status, Object obj) {
+        private Response newGsonResponse(Response.IStatus status, Object obj) {
             switch (acceptedMimeType) {
                 case MIME_JSON:
                     return newFixedLengthResponse(status, acceptedMimeType, gson.toJson(obj));
@@ -170,6 +177,15 @@ public class ServerUtils {
                     // In case we don't support the mimetype requested by client
                     return newFixedLengthResponse(Response.Status.NOT_ACCEPTABLE, MIME_PLAINTEXT, null);
             }
+        }
+
+        private Response defaultResponse(IHTTPSession session) {
+            final String acceptHeader = session.getHeaders().get("accept");
+            if (acceptHeader != null) {
+                acceptedMimeType = MIMEParse.bestMatch(Arrays.asList(supportedMimeTypes), acceptHeader);
+            }
+            return newErrorResponse(Response.Status.METHOD_NOT_ALLOWED,
+                    session.getUri(), null, "This HTTP Method is not supported!");
         }
     }
 }

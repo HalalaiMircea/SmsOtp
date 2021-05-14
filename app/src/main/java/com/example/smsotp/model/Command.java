@@ -26,7 +26,7 @@ public class Command {
 
     public String message;
 
-    public String phoneResults;
+    public String phoneResults; // In Json Format
 
     @NonNull
     public Date executedDate;
