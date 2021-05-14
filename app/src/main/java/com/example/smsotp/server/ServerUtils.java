@@ -140,19 +140,19 @@ public class ServerUtils {
             return defaultResponse(session);
         }
 
-        protected Response ok(Object object) {
+        protected Response Ok(Object object) {
             return newGsonResponse(Response.Status.OK, object);
         }
 
-        protected Response badRequest(String uri, Exception exception, String description) {
+        protected Response BadRequest(String uri, Exception exception, String description) {
             return newErrorResponse(Response.Status.BAD_REQUEST, uri, exception, description);
         }
 
-        protected Response unauthorized(String uri, Exception exception, String description) {
+        protected Response Unauthorized(String uri, Exception exception, String description) {
             return newErrorResponse(Response.Status.UNAUTHORIZED, uri, exception, description);
         }
 
-        protected Response internalError(String uri, Exception exception, String description) {
+        protected Response InternalError(String uri, Exception exception, String description) {
             return newErrorResponse(Response.Status.INTERNAL_ERROR, uri, exception, description);
         }
 

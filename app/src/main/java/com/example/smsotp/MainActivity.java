@@ -46,9 +46,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadDefaultPreferencesOnFirstBoot() {
-        final SharedPreferences isDefaultSetSP = this.getSharedPreferences(
+        final SharedPreferences setDefaultPrefs = this.getSharedPreferences(
                 KEY_HAS_SET_DEFAULT_VALUES, Context.MODE_PRIVATE);
-        if (!isDefaultSetSP.getBoolean(KEY_HAS_SET_DEFAULT_VALUES, false)) {
+        if (!setDefaultPrefs.getBoolean(KEY_HAS_SET_DEFAULT_VALUES, false)) {
             SharedPreferences defaultAppSp = PreferenceManager.getDefaultSharedPreferences(this);
             // Load the defaults from xml INSIDE this if block because the function modifies the
             // KEY_HAS_SET_DEFAULT_VALUES file to true

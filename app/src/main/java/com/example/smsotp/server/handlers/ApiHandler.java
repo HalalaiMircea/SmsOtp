@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 
 import com.example.smsotp.WebService;
@@ -42,7 +44,7 @@ public class ApiHandler extends ServerUtils.RestHandler {
                         gson.fromJson(cmd.phoneResults, resultListType), cmd.executedDate))
                 .collect(Collectors.toList());
 
-        return ok(commandsDto);
+        return Ok(commandsDto);
     }
 
     @Override
@@ -62,9 +64,9 @@ public class ApiHandler extends ServerUtils.RestHandler {
             // If the returned password string is null, username doesn't exist
             String password = database.userDao().getPasswordByUsername(usernameParam);
             if (!Objects.equals(password, passwordParam))
-                return unauthorized(session.getUri(), null, "Incorrect username and/or password!");
+                return Unauthorized(session.getUri(), null, "Incorrect username and/or password!");
         } catch (IllegalArgumentException e) {
-            return unauthorized(session.getUri(), e, "Missing username or password parameters!");
+            return Unauthorized(session.getUri(), e, "Missing username or password parameters!");
         }
 
         try {
@@ -77,26 +79,23 @@ public class ApiHandler extends ServerUtils.RestHandler {
             int commId = (int) database.commandDao().insert(command);
             SmsDto reportDto = new SmsDto(commId, userId, msg, reportResults);
 
-            return ok(reportDto);
+            return Ok(reportDto);
         } catch (IllegalArgumentException e) {
-            return badRequest(session.getUri(), e, "Missing or invalid message or phones parameters!");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            return internalError(session.getUri(), e, null);
+            return BadRequest(session.getUri(), e, "Missing or invalid message or phones parameters!");
         }
     }
 
     /**
-     * Sends intent-based SMS, meaning when the android system broadcasts the sentIntent our app detects
-     * these broadcasts and does something for each case
+     * Sends intent-based SMS, meaning, when the android system broadcasts back the results,
+     * our app detects them and returns an array of these results
      *
-     * @param phones List of String phone numbers
+     * @param phones List of phone numbers as Strings
      * @param msg    Text message to send
-     * @return JSON parameters to insert into DB and append to response JSON
-     * @throws InterruptedException if JSON parsing failed or thread is interrupted
+     * @return a list of {@link SmsDto.Result} to insert into DB and return as response body
      */
-    private List<SmsDto.Result> sendManySms(List<String> phones, String msg) throws InterruptedException {
-        final String baseAction = getClass().getName() + Thread.currentThread().getId() + "#";
+    private List<SmsDto.Result> sendManySms(List<String> phones, String msg) {
+        final Thread myThread = Thread.currentThread();
+        final String baseAction = getClass().getName() + myThread.getId() + "#";
         final PendingIntent[] sentPIs = new PendingIntent[phones.size()];
         IntentFilter filter = new IntentFilter();
         // We build our pendingIntents for the smsManager using a per-thread, per-phone unique action name
@@ -105,32 +104,41 @@ public class ApiHandler extends ServerUtils.RestHandler {
             sentPIs[i] = PendingIntent.getBroadcast(context, 0, new Intent(action), 0);
             filter.addAction(action);
         }
-        SentSmsReceiver receiver = new SentSmsReceiver(phones.size());
-        context.registerReceiver(receiver, filter);
+        SentSmsReceiver receiver = new SentSmsReceiver(myThread, phones.size());
+        HandlerThread handlerThread = new HandlerThread("Handler#" + myThread.getId());
+        handlerThread.start();
 
+        // Register it on the new thread, so we can sleep current thread and avoid doing a busy wait
+        context.registerReceiver(receiver, filter, null, new Handler(handlerThread.getLooper()));
         for (int i = 0; i < phones.size(); i++)
             WebService.getSmsManager().sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
-        // Wait until we have all results
-        while (receiver.resultTypes.contains(null)) {
-            Thread.sleep(100);
-        }
 
+        // Wait until we have all results, or interrupt if it's done sooner
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            Log.d(TAG, "sendManySms: Interrupted " + myThread);
+        }
         Log.d(TAG, "SENT_SMS Result: " + receiver.resultTypes);
         context.unregisterReceiver(receiver);   // Prevent memory leak
 
         List<SmsDto.Result> results = new ArrayList<>(phones.size());
         for (int i = 0; i < phones.size(); i++) {
-            results.add(new SmsDto.Result(phones.get(i), receiver.resultTypes.get(i)));
+            SmsResultType status = receiver.resultTypes.get(i);
+            if (status == null) status = SmsResultType.ERROR_TIMEOUT;
+            results.add(new SmsDto.Result(phones.get(i), status));
         }
         return results;
     }
 
     private static class SentSmsReceiver extends BroadcastReceiver {
+        private final Thread baseThread;
         List<SmsResultType> resultTypes;
 
-        public SentSmsReceiver(int listSize) {
+        public SentSmsReceiver(Thread baseThread, int listSize) {
             super();
-            resultTypes = Arrays.asList(new SmsResultType[listSize]);
+            this.baseThread = baseThread;
+            this.resultTypes = Arrays.asList(new SmsResultType[listSize]);
         }
 
         @Override
@@ -138,6 +146,9 @@ public class ApiHandler extends ServerUtils.RestHandler {
             String action = Objects.requireNonNull(intent.getAction());
             int phoneIdx = Integer.parseInt(action.substring(action.lastIndexOf('#') + 1));
             resultTypes.set(phoneIdx, SmsResultType.lookup(getResultCode()));
+
+            // If there are no nulls left, wake up the base thread
+            if (!resultTypes.contains(null)) baseThread.interrupt();
         }
     }
 
