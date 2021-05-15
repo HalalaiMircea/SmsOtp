@@ -14,6 +14,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavDirections;
 
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentUserBinding;
@@ -31,8 +32,8 @@ public class UserFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         int userId = UserFragmentArgs.fromBundle(requireArguments()).getUserId();
-        viewModel = new ViewModelProvider(this).get(UserViewModel.class);
-        viewModel.init(userId);
+        UserViewModel.Factory factory = new UserViewModel.Factory(requireActivity().getApplication(), userId);
+        viewModel = new ViewModelProvider(this, factory).get(UserViewModel.class);
 
         setHasOptionsMenu(true);
     }
@@ -58,11 +59,13 @@ public class UserFragment extends Fragment {
 
         binding.clearComm.setOnClickListener(v -> {
             viewModel.clearCommands();
-            Toast.makeText(getContext(), "Cleared commands for this user!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), getString(R.string.cleared_commands), Toast.LENGTH_SHORT).show();
         });
 
-        binding.editFab.setOnClickListener(v -> findNavController(v).navigate(UserFragmentDirections
-                .actionEditUser(viewModel.getUserId())));
+        binding.editFab.setOnClickListener(v -> {
+            NavDirections action = UserFragmentDirections.actionEditUser(viewModel.getUserId());
+            findNavController(v).navigate(action);
+        });
         return binding.getRoot();
     }
 

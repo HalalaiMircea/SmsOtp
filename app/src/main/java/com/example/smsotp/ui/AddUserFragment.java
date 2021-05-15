@@ -41,8 +41,8 @@ public class AddUserFragment extends Fragment {
         //(i.e. userId == -1)
         int userId = AddUserFragmentArgs.fromBundle(requireArguments()).getUserId();
         if (userId != -1) {
-            viewModel = new ViewModelProvider(this).get(UserViewModel.class);
-            viewModel.init(userId);
+            UserViewModel.Factory factory = new UserViewModel.Factory(activity.getApplication(), userId);
+            viewModel = new ViewModelProvider(this, factory).get(UserViewModel.class);
         }
         imm = ContextCompat.getSystemService(activity, InputMethodManager.class);
         setHasOptionsMenu(true);

@@ -33,4 +33,5 @@
     <string name="pref_port_warning">Chosen port is out of range[0, 65535]!</string>
     <string name="settings_rationale">We require permission to display your network operators. You will be able to choose one of them to send SMS.</string>
     <string name="no_thanks">No, thanks</string>
+    <string name="cleared_commands">Cleared commands for this user!</string>
 </resources>

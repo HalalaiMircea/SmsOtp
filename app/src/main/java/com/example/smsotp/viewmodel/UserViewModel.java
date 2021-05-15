@@ -5,6 +5,8 @@ import android.app.Application;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.smsotp.AppDatabase;
 import com.example.smsotp.model.CommandDao;
@@ -17,25 +19,15 @@ public class UserViewModel extends AndroidViewModel {
 
     private final UserDao userDao;
     private final CommandDao commandDao;
-    private LiveData<User> userLiveData;
-    private LiveData<Integer> commCountLiveData;
+    private final LiveData<User> userLiveData;
+    private final LiveData<Integer> commCountLiveData;
 
-    public UserViewModel(@NonNull Application application) {
+    public UserViewModel(@NonNull Application application, int userId) {
         super(application);
         userDao = AppDatabase.getInstance(application).userDao();
         commandDao = AppDatabase.getInstance(application).commandDao();
-    }
-
-    /**
-     * Must be called by user after getting this view model from a provider
-     *
-     * @param userId id of the user held in this view model
-     */
-    public void init(int userId) {
-        if (userLiveData == null) {
-            userLiveData = userDao.getById(userId);
-            commCountLiveData = commandDao.countForUserId(userId);
-        }
+        userLiveData = userDao.getById(userId);
+        commCountLiveData = commandDao.countForUserId(userId);
     }
 
     public int getUserId() {
@@ -64,5 +56,26 @@ public class UserViewModel extends AndroidViewModel {
 
     public void deleteUser() {
         new Thread(() -> userDao.delete(userLiveData.getValue())).start();
+    }
+
+    public static class Factory extends ViewModelProvider.AndroidViewModelFactory {
+        private final Application mApplication;
+        private final int mUserId;
+
+        public Factory(@NonNull Application application, int userId) {
+            super(application);
+            this.mApplication = application;
+            this.mUserId = userId;
+        }
+
+        @NonNull
+        @Override
+        public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+            if (modelClass == UserViewModel.class) {
+                //noinspection unchecked
+                return (T) new UserViewModel(mApplication, mUserId);
+            }
+            throw new IllegalArgumentException("UserViewModel class not found");
+        }
     }
 }
