@@ -1,12 +1,11 @@
 package com.example.smsotp.viewmodel;
 
 import android.app.Application;
+import android.database.sqlite.SQLiteConstraintException;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.*;
 
 import com.example.smsotp.AppDatabase;
 import com.example.smsotp.model.CommandDao;
@@ -14,13 +13,17 @@ import com.example.smsotp.model.User;
 import com.example.smsotp.model.UserDao;
 
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class UserViewModel extends AndroidViewModel {
-
+    private static final String TAG = "UserViewModel";
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final UserDao userDao;
     private final CommandDao commandDao;
     private final LiveData<User> userLiveData;
     private final LiveData<Integer> commCountLiveData;
+    private final int userId;
 
     public UserViewModel(@NonNull Application application, int userId) {
         super(application);
@@ -28,10 +31,11 @@ public class UserViewModel extends AndroidViewModel {
         commandDao = AppDatabase.getInstance(application).commandDao();
         userLiveData = userDao.getById(userId);
         commCountLiveData = commandDao.countForUserId(userId);
+        this.userId = userId;
     }
 
-    public int getUserId() {
-        return Objects.requireNonNull(userLiveData.getValue()).id;
+    public boolean isCreating() {
+        return userId == -1;
     }
 
     public LiveData<User> getUser() {
@@ -42,20 +46,34 @@ public class UserViewModel extends AndroidViewModel {
         return commCountLiveData;
     }
 
-    public void updateUser(String username, String password) {
-        User currUser = userLiveData.getValue();
-        assert currUser != null;
-        currUser.username = username;
-        currUser.password = password;
-        userDao.update(currUser);
+    public LiveData<Boolean> addOrUpdateUser(String userText, String passText) {
+        MutableLiveData<Boolean> success = new MutableLiveData<>();
+        executor.execute(() -> {
+            try {
+                // If we entered from main fragment through addNewUserAction
+                if (isCreating()) {
+                    userDao.insert(new User(userText, passText));
+                } else {// Else we entered from existing userEditAction
+                    User currUser = Objects.requireNonNull(userLiveData.getValue());
+                    currUser.username = userText;
+                    currUser.password = passText;
+                    userDao.update(currUser);
+                }
+                success.postValue(true);
+            } catch (SQLiteConstraintException ex) {
+                Log.e(TAG, Objects.requireNonNull(ex.getMessage()));
+                success.postValue(false);
+            }
+        });
+        return success;
     }
 
     public void clearCommands() {
-        new Thread(() -> commandDao.deleteAllForUserId(getUserId())).start();
+        executor.execute(() -> commandDao.deleteAllForUserId(userId));
     }
 
     public void deleteUser() {
-        new Thread(() -> userDao.delete(userLiveData.getValue())).start();
+        executor.execute(() -> userDao.delete(userLiveData.getValue()));
     }
 
     public static class Factory extends ViewModelProvider.AndroidViewModelFactory {

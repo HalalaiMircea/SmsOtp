@@ -1,8 +1,6 @@
 package com.example.smsotp.ui;
 
-import android.database.sqlite.SQLiteConstraintException;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.*;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -15,10 +13,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.smsotp.AppDatabase;
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentAddUserBinding;
-import com.example.smsotp.model.User;
 import com.example.smsotp.viewmodel.UserViewModel;
 
 import java.util.Objects;
@@ -37,13 +33,11 @@ public class AddUserFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         activity = (AppCompatActivity) requireActivity();
-        // We attach a view model to this Fragment instance when we come from editAction in nav_graph
-        //(i.e. userId == -1)
+
         int userId = AddUserFragmentArgs.fromBundle(requireArguments()).getUserId();
-        if (userId != -1) {
-            UserViewModel.Factory factory = new UserViewModel.Factory(activity.getApplication(), userId);
-            viewModel = new ViewModelProvider(this, factory).get(UserViewModel.class);
-        }
+        UserViewModel.Factory factory = new UserViewModel.Factory(activity.getApplication(), userId);
+        viewModel = new ViewModelProvider(this, factory).get(UserViewModel.class);
+
         imm = ContextCompat.getSystemService(activity, InputMethodManager.class);
         setHasOptionsMenu(true);
     }
@@ -61,16 +55,15 @@ public class AddUserFragment extends Fragment {
         toolbar.setNavigationIcon(R.drawable.ic_baseline_close_24);
         toolbar.setNavigationOnClickListener(this::navigateUp);
 
-        // If we came here from action_editUser (i.e. if viewModel is attached)
-        if (viewModel != null) {
+        if (viewModel.isCreating()) {
+            userEditText.requestFocus();
+            userEditText.postDelayed(() -> imm.showSoftInput(userEditText, InputMethodManager.SHOW_FORCED),
+                    100);
+        } else { // If we came from user editing action
             viewModel.getUser().observe(getViewLifecycleOwner(), user -> {
                 userEditText.setText(user.username);
                 passEditText.setText(user.password);
             });
-        } else {
-            userEditText.requestFocus();
-            userEditText.postDelayed(() -> imm.showSoftInput(userEditText, InputMethodManager.SHOW_FORCED),
-                    100);
         }
         return binding.getRoot();
     }
@@ -80,7 +73,7 @@ public class AddUserFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.menu_add_user, menu);
         // We change item's title to make sense when updating user's data
-        int titleRes = viewModel != null ? R.string.save_changes : R.string.create_user;
+        int titleRes = viewModel.isCreating() ? R.string.create_user : R.string.save_changes;
         menu.findItem(R.id.save_user).setTitle(titleRes);
     }
 
@@ -92,25 +85,23 @@ public class AddUserFragment extends Fragment {
             String userText = userEditText.getText().toString().trim();
             String passText = passEditText.getText().toString().trim();
             if (validateInputs(userText, passText)) {
-                new Thread(() -> {
-                    try {
-                        // If we entered from main fragment through addNewUserAction
-                        if (viewModel == null) {
-                            AppDatabase.getInstance(getContext())
-                                    .userDao().insert(new User(userText, passText));
-                        } else {// Else we entered from existing userEditAction
-                            viewModel.updateUser(userText, passText);
-                        }
+                viewModel.addOrUpdateUser(userText, passText).observe(getViewLifecycleOwner(), success -> {
+                    if (success) {
                         navigateUp(requireView());
-                    } catch (SQLiteConstraintException ex) {
-                        Log.e(TAG, Objects.requireNonNull(ex.getMessage()));
-                        activity.runOnUiThread(() -> binding.userField.setError("Username already taken!"));
+                    } else {
+                        binding.userField.setError("Username already taken!");
                     }
-                }).start();
+                });
             }
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 
     private void navigateUp(View v) {
@@ -136,11 +127,5 @@ public class AddUserFragment extends Fragment {
         binding.userField.setError(null);
         binding.passField.setError(null);
         return true;
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
     }
 }

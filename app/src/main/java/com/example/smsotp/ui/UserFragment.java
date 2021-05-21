@@ -1,17 +1,13 @@
 package com.example.smsotp.ui;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.*;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavDirections;
@@ -26,13 +22,14 @@ public class UserFragment extends Fragment {
     private static final String TAG = "UserFragment";
     private FragmentUserBinding binding;
     private UserViewModel viewModel;
+    private UserFragmentArgs args;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        args = UserFragmentArgs.fromBundle(requireArguments());
 
-        int userId = UserFragmentArgs.fromBundle(requireArguments()).getUserId();
-        UserViewModel.Factory factory = new UserViewModel.Factory(requireActivity().getApplication(), userId);
+        UserViewModel.Factory factory = new UserViewModel.Factory(requireActivity().getApplication(), args.getUserId());
         viewModel = new ViewModelProvider(this, factory).get(UserViewModel.class);
 
         setHasOptionsMenu(true);
@@ -41,7 +38,11 @@ public class UserFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentUserBinding.inflate(inflater, container, false);
+        return binding.getRoot();
+    }
 
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         final Toolbar toolbar = binding.include.toolbar;
         ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_24);
@@ -63,10 +64,9 @@ public class UserFragment extends Fragment {
         });
 
         binding.editFab.setOnClickListener(v -> {
-            NavDirections action = UserFragmentDirections.actionEditUser(viewModel.getUserId());
+            NavDirections action = UserFragmentDirections.actionEditUser(args.getUserId());
             findNavController(v).navigate(action);
         });
-        return binding.getRoot();
     }
 
     @Override
@@ -80,8 +80,15 @@ public class UserFragment extends Fragment {
         int id = item.getItemId();
 
         if (id == R.id.menu_delete) {
-            DialogFragment dialog = new DeleteDialog(viewModel);
-            dialog.show(getParentFragmentManager(), "DeleteDialog");
+            new AlertDialog.Builder(getContext())
+                    .setMessage(R.string.del_user_confirm)
+                    .setPositiveButton(R.string.delete_user, (dialog, which1) -> {
+                        viewModel.deleteUser();
+                        dialog.dismiss();
+                        findNavController(requireView()).navigateUp();
+                    })
+                    .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.dismiss())
+                    .show();
             return true;
         }
 
@@ -92,29 +99,5 @@ public class UserFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-    }
-
-    public static class DeleteDialog extends DialogFragment {
-        private final UserViewModel viewModel;
-
-        public DeleteDialog(UserViewModel viewModel) {
-            this.viewModel = viewModel;
-        }
-
-        @NonNull
-        @Override
-        public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-            return new AlertDialog.Builder(getContext())
-                    .setMessage(R.string.del_user_confirm)
-                    .setPositiveButton(R.string.delete_user, this::onPositive)
-                    .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.dismiss())
-                    .create();
-        }
-
-        private void onPositive(DialogInterface dialog, int which) {
-            viewModel.deleteUser();
-            dialog.dismiss();
-            requireActivity().onBackPressed();
-        }
     }
 }
