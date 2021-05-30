@@ -14,7 +14,6 @@ import androidx.navigation.NavDirections;
 
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentUserBinding;
-import com.example.smsotp.viewmodel.UserViewModel;
 
 import static androidx.navigation.Navigation.findNavController;
 

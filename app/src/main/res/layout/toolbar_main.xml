@@ -7,6 +7,7 @@
     android:background="?attr/colorPrimary"
     android:minHeight="?attr/actionBarSize"
     android:theme="@style/AppTheme.AppBarOverlay"
+    app:popupTheme="@style/AppTheme.PopupOverlay"
     app:navigationContentDescription="@string/nav_app_bar_navigate_up_description"
     app:title="@string/app_name">
 

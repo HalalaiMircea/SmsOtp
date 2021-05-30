@@ -7,7 +7,7 @@
     android:background="@color/colorViewPagerBg"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context=".ui.StatusFragment">
+    tools:context=".ui.main.StatusFragment">
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"

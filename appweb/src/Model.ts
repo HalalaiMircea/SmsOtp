@@ -3,7 +3,7 @@ export class SmsDto {
         public commandId: number,
         public userId: number,
         public message: string,
-        public results: Array<SmsDto.Result>,
+        public results: Array<SmsDto.Result>
     ) {
     }
 }

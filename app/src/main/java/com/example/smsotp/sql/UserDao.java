@@ -1,4 +1,4 @@
-package com.example.smsotp.model;
+package com.example.smsotp.sql;
 
 import androidx.lifecycle.LiveData;
 import androidx.room.*;

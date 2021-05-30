@@ -6,7 +6,7 @@
     <string name="service_notifi_msg">Serverul Web rulează…</string>
     <string name="status">Stare</string>
     <string name="users">Utilizatori</string>
-    <string name="statistics">Statistici</string>
+    <string name="web_app">Apl. Web</string>
     <string name="db_icon_desc">Icoană bază de date</string>
     <string name="server_port_icon_desc">Icoană port server</string>
     <string name="wifi_ip_icon_desc">Icoană IP Wifi</string>
@@ -33,4 +33,5 @@
     <string name="settings_rationale">Avem nevoie de permisiunea de a afișa operatorii dvs. de rețea. Veți putea alege unul dintre ei pentru a trimite SMS-uri.</string>
     <string name="no_thanks">Nu, mulțumesc</string>
     <string name="cleared_commands">S-au șters comenzile utilizatorului!</string>
+    <string name="refresh">Reîncarcă</string>
 </resources>

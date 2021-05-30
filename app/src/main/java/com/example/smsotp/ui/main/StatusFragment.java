@@ -1,4 +1,4 @@
-package com.example.smsotp.ui;
+package com.example.smsotp.ui.main;
 
 import android.content.Context;
 import android.content.Intent;
@@ -19,7 +19,6 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.smsotp.R;
 import com.example.smsotp.WebService;
 import com.example.smsotp.databinding.FragmentStatusBinding;
-import com.example.smsotp.viewmodel.StatusViewModel;
 import com.google.android.material.snackbar.Snackbar;
 
 import static android.Manifest.permission.SEND_SMS;

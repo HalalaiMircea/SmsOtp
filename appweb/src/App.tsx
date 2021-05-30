@@ -1,15 +1,16 @@
 import React, {useState} from 'react';
 import './App.css';
-import {Button, Col, Container, Form} from "react-bootstrap";
+import {Button, Col, Container, Form, Table} from "react-bootstrap";
 import {BASE_URL} from "./config";
 import axios from "axios";
-import {SendSmsForm} from "./Model";
+import {SendSmsForm, SmsDto} from "./Model";
 
 
 function App() {
-    const [validated, setValidated] = useState(false);
-    const [phoneError, setPhoneError] = useState(false)
-    const [input, setInput] = useState(new SendSmsForm())
+    const [validated, setValidated] = useState<boolean>(false);
+    const [phoneError, setPhoneError] = useState<boolean>(false)
+    const [input, setInput] = useState<SendSmsForm>(new SendSmsForm())
+    const [response, setResponse] = useState<SmsDto>()
 
     const handleInputChange = (e: any) => {
         let name = e.currentTarget.name;
@@ -44,7 +45,7 @@ function App() {
         axios.post(`${BASE_URL}/sms`, formData)
             .then(res => {
                 console.log(res)
-                console.log(res.data)
+                setResponse(res.data)
             })
             .catch(error => {
                 console.log(error)
@@ -95,12 +96,36 @@ function App() {
 
                     <Form.Group controlId="formMessage">
                         <Form.Label>Message</Form.Label>
-                        <Form.Control as="textarea" rows={3} name="message" onChange={handleInputChange} required/>
-                        <Form.Control.Feedback type="invalid">Please enter a non-blank message</Form.Control.Feedback>
+                        <Form.Control as="textarea" rows={3} name="message" onChange={handleInputChange}
+                                      required/>
+                        <Form.Control.Feedback type="invalid">Please enter a non-blank
+                            message</Form.Control.Feedback>
                     </Form.Group>
 
                     <Button variant="primary" type="submit">Send SMS</Button>
                 </Form>
+
+                {response !== undefined ?
+                    <Table id="result-table" striped bordered>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Phone Number</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {
+                            response.results.map((result, idx) => (
+                                <tr key={idx}>
+                                    <td>{idx}</td>
+                                    <td>{result.phone}</td>
+                                    <td>{result.status}</td>
+                                </tr>
+                            ))
+                        }
+                        </tbody>
+                    </Table> : null}
             </Container>
         </div>
     );

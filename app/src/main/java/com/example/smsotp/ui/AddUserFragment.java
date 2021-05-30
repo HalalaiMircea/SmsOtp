@@ -15,7 +15,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.smsotp.R;
 import com.example.smsotp.databinding.FragmentAddUserBinding;
-import com.example.smsotp.viewmodel.UserViewModel;
 
 import java.util.Objects;
 

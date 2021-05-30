@@ -3,7 +3,7 @@ package com.example.smsotp.server;
 import android.content.Context;
 import android.util.Log;
 
-import com.example.smsotp.AppDatabase;
+import com.example.smsotp.sql.AppDatabase;
 import com.example.smsotp.server.handlers.ApiHandler;
 import com.google.gson.Gson;
 

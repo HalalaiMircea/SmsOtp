@@ -1,4 +1,4 @@
-package com.example.smsotp.viewmodel;
+package com.example.smsotp.ui;
 
 import android.app.Application;
 import android.database.sqlite.SQLiteConstraintException;
@@ -7,10 +7,10 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.*;
 
-import com.example.smsotp.AppDatabase;
-import com.example.smsotp.model.CommandDao;
-import com.example.smsotp.model.User;
-import com.example.smsotp.model.UserDao;
+import com.example.smsotp.sql.AppDatabase;
+import com.example.smsotp.sql.CommandDao;
+import com.example.smsotp.sql.User;
+import com.example.smsotp.sql.UserDao;
 
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;

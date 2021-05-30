@@ -1,4 +1,4 @@
-package com.example.smsotp;
+package com.example.smsotp.sql;
 
 import android.content.Context;
 import android.util.Log;
@@ -6,11 +6,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.room.*;
 import androidx.sqlite.db.SupportSQLiteDatabase;
-
-import com.example.smsotp.model.Command;
-import com.example.smsotp.model.CommandDao;
-import com.example.smsotp.model.User;
-import com.example.smsotp.model.UserDao;
 
 import java.util.Date;
 

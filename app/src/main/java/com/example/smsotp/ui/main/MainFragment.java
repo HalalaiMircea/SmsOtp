@@ -1,4 +1,4 @@
-package com.example.smsotp.ui;
+package com.example.smsotp.ui.main;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,8 +25,15 @@ public class MainFragment extends Fragment {
     private final ViewPager2.OnPageChangeCallback pageChangeCallback = new ViewPager2.OnPageChangeCallback() {
         @Override
         public void onPageSelected(int position) {
-            if (position == 0) binding.fab.hide();
-            else binding.fab.show();
+            switch (position) {
+                case 0:
+                case 2:
+                    binding.fab.hide();
+                    break;
+                case 1:
+                    binding.fab.show();
+                    break;
+            }
         }
     };
 
@@ -58,7 +65,6 @@ public class MainFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_main, menu);
-        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
@@ -81,12 +87,12 @@ public class MainFragment extends Fragment {
 
     private static class SectionsPagerAdapter extends FragmentStateAdapter {
         @StringRes
-        private static final int[] TAB_TITLES = {R.string.status, R.string.users, R.string.statistics};
+        private static final int[] TAB_TITLES = {R.string.status, R.string.users, R.string.web_app};
         private final Fragment[] fragments;
 
         public SectionsPagerAdapter(Fragment frag) {
             super(frag);
-            fragments = new Fragment[]{new StatusFragment(), new UserListFragment()};
+            fragments = new Fragment[]{new StatusFragment(), new UserListFragment(), new WebAppFragment()};
         }
 
         @NonNull

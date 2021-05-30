@@ -1,4 +1,4 @@
-package com.example.smsotp.viewmodel;
+package com.example.smsotp.ui.main;
 
 import android.app.Application;
 import android.content.*;
@@ -13,8 +13,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.preference.PreferenceManager;
 
-import com.example.smsotp.AppDatabase;
 import com.example.smsotp.WebService;
+import com.example.smsotp.sql.AppDatabase;
 import com.example.smsotp.ui.SettingsFragment;
 
 import java.math.BigInteger;
@@ -31,8 +31,8 @@ public class StatusViewModel extends AndroidViewModel {
     // LiveData
     private final MutableLiveData<String> wifiIpLiveData = new MutableLiveData<>();
     private final LiveData<Boolean> serverStateLiveData = WebService.isRunning;
-    private MutableLiveData<String> serverPort;
     private final String databasePath;
+    private MutableLiveData<String> serverPort;
 
     public StatusViewModel(@NonNull Application application) {
         super(application);

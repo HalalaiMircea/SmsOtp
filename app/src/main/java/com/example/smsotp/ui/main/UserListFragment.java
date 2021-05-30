@@ -1,4 +1,4 @@
-package com.example.smsotp.ui;
+package com.example.smsotp.ui.main;
 
 import android.content.Context;
 import android.content.res.Configuration;
@@ -16,9 +16,8 @@ import androidx.recyclerview.widget.*;
 
 import com.example.smsotp.databinding.FragmentUserListBinding;
 import com.example.smsotp.databinding.UserListItemBinding;
-import com.example.smsotp.model.User;
-import com.example.smsotp.viewmodel.MainViewModel;
-import com.example.smsotp.viewmodel.MainViewModel.UserItem;
+import com.example.smsotp.sql.User;
+import com.example.smsotp.ui.main.UserListViewModel.UserItem;
 
 public class UserListFragment extends Fragment {
     private static final String TAG = "UserListFragment";
@@ -27,7 +26,7 @@ public class UserListFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         binding = FragmentUserListBinding.inflate(inflater, container, false);
-        MainViewModel viewModel = new ViewModelProvider(this).get(MainViewModel.class);
+        UserListViewModel viewModel = new ViewModelProvider(this).get(UserListViewModel.class);
 
         final Context context = getContext();
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
@@ -86,8 +85,8 @@ public class UserListFragment extends Fragment {
     }
 
     private static class ViewHolder extends RecyclerView.ViewHolder {
-        private int userId;
         private final UserListItemBinding binding;
+        private int userId;
 
         public ViewHolder(UserListItemBinding binding) {
             super(binding.getRoot());

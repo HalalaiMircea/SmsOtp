@@ -8,5 +8,5 @@
     android:background="@color/colorViewPagerBg"
     android:clipToPadding="false"
     android:padding="4dp"
-    tools:context=".ui.UserListFragment"
+    tools:context=".ui.main.UserListFragment"
     tools:listitem="@layout/user_list_item" />
