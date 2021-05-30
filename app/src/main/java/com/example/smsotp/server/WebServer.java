@@ -5,7 +5,6 @@ import android.util.Log;
 
 import com.example.smsotp.AppDatabase;
 import com.example.smsotp.server.handlers.ApiHandler;
-import com.example.smsotp.server.handlers.ErrorHandler;
 import com.google.gson.Gson;
 
 import java.io.ByteArrayOutputStream;
@@ -43,7 +42,7 @@ public class WebServer extends RouterNanoHTTPD {
 
     @Override
     public void addMappings() {
-        setNotFoundHandler(ErrorHandler.class);
+        setNotFoundHandler(com.example.smsotp.server.handlers.DefaultHandler.class);
         addRoute("/", com.example.smsotp.server.handlers.IndexHandler.class);
         addRoute("/api/sms", ApiHandler.class, context);
     }
@@ -62,7 +61,6 @@ public class WebServer extends RouterNanoHTTPD {
                 return newFixedLengthResponse(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
             }
         }
-        Log.d(TAG, "serve: " + files);
         return super.serve(session);
     }
 

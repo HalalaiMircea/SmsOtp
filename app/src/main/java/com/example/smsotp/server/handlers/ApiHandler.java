@@ -111,7 +111,7 @@ public class ApiHandler extends ServerUtils.RestHandler {
         // Register it on the new thread, so we can sleep current thread and avoid doing a busy wait
         context.registerReceiver(receiver, filter, null, new Handler(handlerThread.getLooper()));
         for (int i = 0; i < phones.size(); i++)
-            WebService.getSmsManager().sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
+            WebService.smsManager.sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
 
         // Wait until we have all results, or interrupt if it's done sooner
         try {

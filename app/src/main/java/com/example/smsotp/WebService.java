@@ -22,13 +22,9 @@ import static com.example.smsotp.ui.SettingsFragment.KEY_PREF_SIM;
 public class WebService extends Service {
     private static final String TAG = "SMSOTP_WebService";
     public static MutableLiveData<Boolean> isRunning = new MutableLiveData<>();
-    private static SmsManager smsManager;
+    public static SmsManager smsManager;
     private WebServer webServer;
     private SharedPreferences sharedPrefs;
-
-    public static SmsManager getSmsManager() {
-        return smsManager;
-    }
 
     @Override
     public void onCreate() {
