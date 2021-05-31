@@ -48,11 +48,11 @@ public class MainFragment extends Fragment {
         binding = FragmentMainBinding.inflate(inflater, container, false);
 
         ((AppCompatActivity) requireActivity()).setSupportActionBar(binding.include.toolbar);
-        SectionsPagerAdapter adapter = new SectionsPagerAdapter(this);
-        binding.viewPager.setAdapter(adapter);
+
         binding.viewPager.registerOnPageChangeCallback(pageChangeCallback);
-        new TabLayoutMediator(binding.tabs, binding.viewPager,
-                (tab, position) -> tab.setText(SectionsPagerAdapter.TAB_TITLES[position])
+        binding.viewPager.setAdapter(new SectionsPagerAdapter(this));
+        new TabLayoutMediator(binding.tabs, binding.viewPager, (tab, position) ->
+                tab.setText(SectionsPagerAdapter.TAB_TITLES[position])
         ).attach();
 
         binding.fab.setOnClickListener(v -> {
@@ -88,11 +88,10 @@ public class MainFragment extends Fragment {
     private static class SectionsPagerAdapter extends FragmentStateAdapter {
         @StringRes
         private static final int[] TAB_TITLES = {R.string.status, R.string.users, R.string.web_app};
-        private final Fragment[] fragments;
+        private final Fragment[] fragments = {new StatusFragment(), new UserListFragment(), new WebAppFragment()};
 
-        public SectionsPagerAdapter(Fragment frag) {
-            super(frag);
-            fragments = new Fragment[]{new StatusFragment(), new UserListFragment(), new WebAppFragment()};
+        public SectionsPagerAdapter(Fragment parent) {
+            super(parent);
         }
 
         @NonNull

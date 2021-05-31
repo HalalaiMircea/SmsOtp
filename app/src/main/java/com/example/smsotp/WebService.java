@@ -21,14 +21,13 @@ import static com.example.smsotp.ui.SettingsFragment.KEY_PREF_SIM;
 
 public class WebService extends Service {
     private static final String TAG = "SMSOTP_WebService";
-    public static MutableLiveData<Boolean> isRunning = new MutableLiveData<>();
+    public static MutableLiveData<Boolean> isRunning = new MutableLiveData<>(false);
     public static SmsManager smsManager;
     private WebServer webServer;
     private SharedPreferences sharedPrefs;
 
     @Override
     public void onCreate() {
-        isRunning.setValue(true);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         startForeground(1, createNotification());
 
@@ -47,6 +46,7 @@ public class WebService extends Service {
         webServer = new WebServer(this, port);
         try {
             webServer.start();
+            isRunning.postValue(true);
             Log.i(TAG, "Web Service started!");
         } catch (IOException e) {
             e.printStackTrace();

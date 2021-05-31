@@ -1,27 +1,35 @@
 package com.example.smsotp.ui.main;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.*;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 
 import com.example.smsotp.R;
+import com.example.smsotp.WebService;
 import com.example.smsotp.databinding.FragmentWebAppBinding;
 import com.example.smsotp.ui.SettingsFragment;
 
 public class WebAppFragment extends Fragment {
+    private static final String TAG = "WebAppFragment";
     private FragmentWebAppBinding binding;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
-        binding = FragmentWebAppBinding.inflate(inflater, container, false);
         setHasOptionsMenu(true);
+        binding = FragmentWebAppBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
@@ -32,15 +40,27 @@ public class WebAppFragment extends Fragment {
         String port = sp.getString(SettingsFragment.KEY_PREF_PORT, "8080");
 
         WebView webView = binding.webView;
-        webView.loadUrl("http://localhost:" + port);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                binding.refreshLayout.setRefreshing(false);
+                if (binding != null) {
+                    binding.refreshLayout.setRefreshing(false);
+                }
             }
         });
         binding.refreshLayout.setOnRefreshListener(webView::reload);
+
+        Context context = requireContext();
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) ==
+                PackageManager.PERMISSION_GRANTED) {
+            // Only if we have SMS permission, we start the server automatically
+            context.startService(new Intent(context, WebService.class));
+        }
+        WebService.isRunning.observe(getViewLifecycleOwner(), isReady -> {
+            webView.loadUrl("http://localhost:" + port);
+//            Log.e(TAG, "Observed isRunning new value " + isReady);
+        });
     }
 
     @Override

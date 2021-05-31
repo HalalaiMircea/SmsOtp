@@ -1,3 +1,15 @@
 #result-table {
     margin-top: 16px;
+    background-color: white;
+}
+
+#alert-toast {
+    top: 90%;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    position: fixed;
+    z-index: 9999;
 }
