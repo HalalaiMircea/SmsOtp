@@ -29,14 +29,10 @@
     </style>
 </head>
 <body>
-<h1>HTTP Status ${status}</h1>
+<h1>HTTP Status 404 Not Found</h1>
 <hr>
 <p><span>Path</span> ${uri}</p>
-<p><span>Description</span> ${description}</p>
-<#if exStacktrace??>
-<p><span>Exception</span></p>
-<p class="ex-block">${exStacktrace}</p>
-</#if>
+<p><span>Description</span> Resource not found</p>
 <hr>
 <h2>NanoHTTPD/2.3.1</h2>
 </body>

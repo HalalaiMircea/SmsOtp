@@ -24,6 +24,8 @@ import com.google.android.material.snackbar.Snackbar;
 import static android.Manifest.permission.SEND_SMS;
 import static androidx.core.content.ContextCompat.checkSelfPermission;
 
+
+@SuppressWarnings("deprecation")
 public class StatusFragment extends Fragment {
     private static final String TAG = "SMSOTP_StatusFragment";
     private static final int PERMISSION_REQUEST = 10;

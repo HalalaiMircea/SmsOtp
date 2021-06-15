@@ -24,11 +24,10 @@ public class WebService extends Service {
     public static MutableLiveData<Boolean> isRunning = new MutableLiveData<>(false);
     public static SmsManager smsManager;
     private WebServer webServer;
-    private SharedPreferences sharedPrefs;
 
     @Override
     public void onCreate() {
-        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         startForeground(1, createNotification());
 
         // Acquire the right SmsManager for the current Android version
@@ -38,15 +37,11 @@ public class WebService extends Service {
         } else smsManager = SmsManager.getDefault();
 
         // Create and start the webServer on a background thread so we don't block the UI thread
-        new Thread(this::runServer).start();
-    }
-
-    private void runServer() {
         int port = Integer.parseInt(sharedPrefs.getString(KEY_PREF_PORT, "8080"));
         webServer = new WebServer(this, port);
         try {
             webServer.start();
-            isRunning.postValue(true);
+            isRunning.setValue(true);
             Log.i(TAG, "Web Service started!");
         } catch (IOException e) {
             e.printStackTrace();

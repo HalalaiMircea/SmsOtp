@@ -10,11 +10,11 @@ import android.os.HandlerThread;
 import android.util.Log;
 
 import com.example.smsotp.WebService;
-import com.example.smsotp.sql.Command;
 import com.example.smsotp.server.ServerUtils;
 import com.example.smsotp.server.dto.CommandDto;
 import com.example.smsotp.server.dto.SmsDto;
 import com.example.smsotp.server.dto.SmsResultType;
+import com.example.smsotp.sql.Command;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;

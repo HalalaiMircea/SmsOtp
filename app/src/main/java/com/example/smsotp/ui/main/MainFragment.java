@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.*;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -38,16 +37,16 @@ public class MainFragment extends Fragment {
     };
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         setHasOptionsMenu(true);
+        binding = FragmentMainBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
-        binding = FragmentMainBinding.inflate(inflater, container, false);
-
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         ((AppCompatActivity) requireActivity()).setSupportActionBar(binding.include.toolbar);
+        //TODO see how to remove fragment from viewpager collection
 
         binding.viewPager.registerOnPageChangeCallback(pageChangeCallback);
         binding.viewPager.setAdapter(new SectionsPagerAdapter(this));
@@ -59,7 +58,13 @@ public class MainFragment extends Fragment {
             NavDirections action = MainFragmentDirections.actionMainFragmentToAddUserFragment();
             Navigation.findNavController(v).navigate(action);
         });
-        return binding.getRoot();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding.viewPager.unregisterOnPageChangeCallback(pageChangeCallback);
+        binding = null;
     }
 
     @Override
@@ -76,13 +81,6 @@ public class MainFragment extends Fragment {
             return true;
         }
         return false;
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding.viewPager.unregisterOnPageChangeCallback(pageChangeCallback);
-        binding = null;
     }
 
     private static class SectionsPagerAdapter extends FragmentStateAdapter {

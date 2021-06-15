@@ -27,6 +27,7 @@ import static android.Manifest.permission.READ_PHONE_STATE;
 import static androidx.core.content.ContextCompat.checkSelfPermission;
 import static androidx.core.content.ContextCompat.getSystemService;
 
+@SuppressWarnings("deprecation")
 public class SettingsFragment extends PreferenceFragmentCompat {
     public static final String KEY_PREF_PORT = "port";
     public static final String KEY_PREF_SIM = "sim";
@@ -72,9 +73,12 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             SubscriptionManager subManager = getSystemService(requireContext(), SubscriptionManager.class);
             assert subManager != null;
             List<SubscriptionInfo> subscriptionsInfo = subManager.getActiveSubscriptionInfoList();
-            CharSequence[] entries = new CharSequence[subscriptionsInfo.size()];
-            CharSequence[] entryValues = new CharSequence[subscriptionsInfo.size()];
-            for (int i = 0; i < subscriptionsInfo.size(); i++) {
+            int numSubs = 0;
+            if (subscriptionsInfo != null) numSubs = subscriptionsInfo.size();
+
+            CharSequence[] entries = new CharSequence[numSubs];
+            CharSequence[] entryValues = new CharSequence[numSubs];
+            for (int i = 0; i < numSubs; i++) {
                 SubscriptionInfo subInfo = subscriptionsInfo.get(i);
                 entries[i] = subInfo.getDisplayName();
                 entryValues[i] = Integer.toString(subInfo.getSubscriptionId());

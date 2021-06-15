@@ -5,6 +5,7 @@ import android.util.Patterns;
 import androidx.annotation.NonNull;
 
 import org.commonjava.mimeparse.MIMEParse;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
@@ -12,7 +13,6 @@ import org.json.XML;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -68,14 +68,14 @@ public class ServerUtils {
             }
         }
 
-        public Map<String, Object> getMapModel() {
+        /*public Map<String, Object> getMapModel() {
             Map<String, Object> map = new HashMap<>();
             map.put("status", status.getDescription().replaceFirst(" ", " - "));
             map.put("uri", uri);
             map.put("description", description != null ? description : status.getDescription());
             map.put("exStacktrace", exStacktrace);
             return map;
-        }
+        }*/
     }
 
     /**
@@ -167,9 +167,19 @@ public class ServerUtils {
                     return newFixedLengthResponse(status, acceptedMimeType, gson.toJson(obj));
                 case "text/xml":
                 case "application/xml":
+                    // This is necessary for XML support... Yes, arrays in XML suck ass
                     try {
-                        return newFixedLengthResponse(status, acceptedMimeType,
-                                XML.toString(new JSONObject(gson.toJson(obj)), "root"));
+                        JSONObject json;
+                        String tagName;
+                        if (obj instanceof List) {
+                            json = new JSONObject()
+                                    .put("element", new JSONArray(gson.toJson(obj)));
+                            tagName = "array";
+                        } else {
+                            json = new JSONObject(gson.toJson(obj));
+                            tagName = "root";
+                        }
+                        return newFixedLengthResponse(status, acceptedMimeType, XML.toString(json, tagName));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
