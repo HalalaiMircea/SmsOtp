@@ -58,8 +58,8 @@ public class WebAppFragment extends Fragment {
             context.startService(new Intent(context, WebService.class));
         }
         WebService.isRunning.observe(getViewLifecycleOwner(), isReady -> {
-            webView.loadUrl("http://localhost:" + port);
-//            Log.e(TAG, "Observed isRunning new value " + isReady);
+            binding.webView.loadUrl("http://localhost:" + port);
+            Log.e(TAG, "onViewCreated: "+isReady);
         });
     }
 

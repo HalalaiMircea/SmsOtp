@@ -49,7 +49,8 @@ public class MainFragment extends Fragment {
         //TODO see how to remove fragment from viewpager collection
 
         binding.viewPager.registerOnPageChangeCallback(pageChangeCallback);
-        binding.viewPager.setAdapter(new SectionsPagerAdapter(this));
+        SectionsPagerAdapter adapter = new SectionsPagerAdapter(this);
+        binding.viewPager.setAdapter(adapter);
         new TabLayoutMediator(binding.tabs, binding.viewPager, (tab, position) ->
                 tab.setText(SectionsPagerAdapter.TAB_TITLES[position])
         ).attach();
@@ -86,7 +87,7 @@ public class MainFragment extends Fragment {
     private static class SectionsPagerAdapter extends FragmentStateAdapter {
         @StringRes
         private static final int[] TAB_TITLES = {R.string.status, R.string.users, R.string.web_app};
-        private final Fragment[] fragments = {new StatusFragment(), new UserListFragment(), new WebAppFragment()};
+        private Fragment[] fragments = {new StatusFragment(), new UserListFragment(), new WebAppFragment()};
 
         public SectionsPagerAdapter(Fragment parent) {
             super(parent);

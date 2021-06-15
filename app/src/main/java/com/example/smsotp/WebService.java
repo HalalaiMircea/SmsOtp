@@ -27,9 +27,9 @@ public class WebService extends Service {
 
     @Override
     public void onCreate() {
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         startForeground(1, createNotification());
 
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         // Acquire the right SmsManager for the current Android version
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             int subId = Integer.parseInt(sharedPrefs.getString(KEY_PREF_SIM, "0"));

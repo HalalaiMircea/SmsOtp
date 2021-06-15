@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.util.Log;
+import android.webkit.WebView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,6 +31,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(ActivityMainBinding.inflate(getLayoutInflater()).getRoot());
+        // Preload the system WebView.
+        // WTF I only STUMBLED BY ACCIDENT on this solution to the inflation taking too long
+        WebView wv = new WebView(this);
 
         loadDefaultPreferencesOnFirstBoot();
 
