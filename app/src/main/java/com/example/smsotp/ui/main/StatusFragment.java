@@ -67,7 +67,6 @@ public class StatusFragment extends Fragment {
         } else {
             context.stopService(intent);
         }
-        Log.e(TAG, "onCheckedChanged: "+isChecked);
     }
 
     @Override

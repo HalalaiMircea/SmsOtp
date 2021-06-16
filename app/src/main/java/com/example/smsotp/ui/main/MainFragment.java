@@ -15,6 +15,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.smsotp.R;
 import com.example.smsotp.SettingsActivity;
+import com.example.smsotp.WebService;
 import com.example.smsotp.databinding.FragmentMainBinding;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -46,14 +47,19 @@ public class MainFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         ((AppCompatActivity) requireActivity()).setSupportActionBar(binding.include.toolbar);
-        //TODO see how to remove fragment from viewpager collection
 
+        int fragCount;
+        if (WebService.isRunning.getValue() != null) {
+            fragCount = WebService.isRunning.getValue() ? 3 : 2;
+        } else fragCount = 2;
+
+        SectionsPagerAdapter adapter = new SectionsPagerAdapter(this, fragCount);
         binding.viewPager.registerOnPageChangeCallback(pageChangeCallback);
-        SectionsPagerAdapter adapter = new SectionsPagerAdapter(this);
         binding.viewPager.setAdapter(adapter);
         new TabLayoutMediator(binding.tabs, binding.viewPager, (tab, position) ->
                 tab.setText(SectionsPagerAdapter.TAB_TITLES[position])
         ).attach();
+        WebService.isRunning.observe(getViewLifecycleOwner(), adapter::changeCount);
 
         binding.fab.setOnClickListener(v -> {
             NavDirections action = MainFragmentDirections.actionMainFragmentToAddUserFragment();
@@ -87,10 +93,12 @@ public class MainFragment extends Fragment {
     private static class SectionsPagerAdapter extends FragmentStateAdapter {
         @StringRes
         private static final int[] TAB_TITLES = {R.string.status, R.string.users, R.string.web_app};
-        private Fragment[] fragments = {new StatusFragment(), new UserListFragment(), new WebAppFragment()};
+        private final Fragment[] fragments = {new StatusFragment(), new UserListFragment(), new WebAppFragment()};
+        private int fragCount;
 
-        public SectionsPagerAdapter(Fragment parent) {
+        public SectionsPagerAdapter(Fragment parent, int initialCount) {
             super(parent);
+            fragCount = initialCount;
         }
 
         @NonNull
@@ -101,7 +109,18 @@ public class MainFragment extends Fragment {
 
         @Override
         public int getItemCount() {
-            return fragments.length;
+            return fragCount;
+        }
+
+        public void changeCount(boolean keepLast) {
+            final int lastFragCount = fragCount;
+            if (keepLast) {
+                fragCount = 3;
+                if (lastFragCount != fragCount) notifyItemInserted(2);
+            } else {
+                fragCount = 2;
+                if (lastFragCount != fragCount) notifyItemRemoved(2);
+            }
         }
     }
 }
