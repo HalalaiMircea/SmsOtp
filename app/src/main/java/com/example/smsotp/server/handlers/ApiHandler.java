@@ -11,6 +11,7 @@ import android.util.Log;
 
 import com.example.smsotp.WebService;
 import com.example.smsotp.server.ServerUtils;
+import com.example.smsotp.server.WebServerRouter.UriResource;
 import com.example.smsotp.server.dto.CommandDto;
 import com.example.smsotp.server.dto.SmsDto;
 import com.example.smsotp.server.dto.SmsResultType;
@@ -23,7 +24,6 @@ import java.util.stream.Collectors;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
-import fi.iki.elonen.router.RouterNanoHTTPD.UriResource;
 
 import static com.example.smsotp.server.WebServer.database;
 import static com.example.smsotp.server.WebServer.gson;

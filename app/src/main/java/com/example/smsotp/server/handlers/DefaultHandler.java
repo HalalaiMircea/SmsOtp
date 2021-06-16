@@ -2,8 +2,8 @@ package com.example.smsotp.server.handlers;
 
 import android.content.Context;
 
-import com.example.smsotp.SmsOtpApplication;
 import com.example.smsotp.server.ServerUtils;
+import com.example.smsotp.server.WebServerRouter.UriResource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,7 +14,6 @@ import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD.*;
 import fi.iki.elonen.NanoHTTPD.Response.Status;
-import fi.iki.elonen.router.RouterNanoHTTPD.UriResource;
 
 import static fi.iki.elonen.NanoHTTPD.*;
 
@@ -24,7 +23,7 @@ public class DefaultHandler extends ServerUtils.HtmlHandler {
 
     @Override
     public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        mContext = SmsOtpApplication.getAppContext();
+        mContext = uriResource.initParameter(Context.class);
         try {
             String fileName = "reactapp" + session.getUri();
             InputStream iStream = mContext.getAssets().open(fileName);

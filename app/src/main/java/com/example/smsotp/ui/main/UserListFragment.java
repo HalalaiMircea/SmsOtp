@@ -3,13 +3,11 @@ package com.example.smsotp.ui.main;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavDirections;
@@ -17,7 +15,6 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.*;
 
 import com.example.smsotp.databinding.FragmentUserListBinding;
-import com.example.smsotp.databinding.FragmentWebAppBinding;
 import com.example.smsotp.databinding.UserListItemBinding;
 import com.example.smsotp.sql.User;
 import com.example.smsotp.ui.main.UserListViewModel.UserItem;
@@ -83,10 +80,10 @@ public class UserListFragment extends Fragment {
         }
 
         @Override
-        public void onBindViewHolder(final ViewHolder holder, int position) {
+        public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
             // Here we set info for each individual item's info
-            holder.binding.userName.setText(getItem(position).getUsername());
-            holder.userId = getItem(position).getId();
+            UserItem item = getItem(position);
+            if (item != null) holder.bind(item);
         }
     }
 
@@ -101,8 +98,13 @@ public class UserListFragment extends Fragment {
             binding.getRoot().setOnClickListener(this::onClick);
         }
 
+        public void bind(UserItem item) {
+            binding.userName.setText(item.getUsername());
+            userId = item.getId();
+        }
+
         private void onClick(View v) {
-            if (getAdapterPosition() != RecyclerView.NO_POSITION) {
+            if (getBindingAdapterPosition() != RecyclerView.NO_POSITION) {
                 NavDirections action = MainFragmentDirections.actionMainFragmentToUserFragment(userId);
                 Navigation.findNavController(v).navigate(action);
             }

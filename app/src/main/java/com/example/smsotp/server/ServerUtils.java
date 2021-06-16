@@ -4,6 +4,8 @@ import android.util.Patterns;
 
 import androidx.annotation.NonNull;
 
+import com.example.smsotp.server.WebServerRouter.UriResource;
+
 import org.commonjava.mimeparse.MIMEParse;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,8 +20,6 @@ import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
-import fi.iki.elonen.router.RouterNanoHTTPD;
-import fi.iki.elonen.router.RouterNanoHTTPD.UriResource;
 
 import static com.example.smsotp.server.WebServer.gson;
 import static fi.iki.elonen.NanoHTTPD.MIME_PLAINTEXT;
@@ -81,9 +81,8 @@ public class ServerUtils {
     /**
      * Base handler for simple html endpoints, like index or error
      */
-    public abstract static class HtmlHandler implements RouterNanoHTTPD.UriResponder {
+    public abstract static class HtmlHandler implements WebServerRouter.UriResponder {
 
-        @Override
         public abstract Response get(UriResource uriResource, Map<String, String> urlParams,
                                      IHTTPSession session);
 
@@ -109,7 +108,7 @@ public class ServerUtils {
         }
     }
 
-    public abstract static class RestHandler implements RouterNanoHTTPD.UriResponder {
+    public abstract static class RestHandler implements WebServerRouter.UriResponder {
         protected static final String MIME_JSON = "application/json";
         protected static final String[] supportedMimeTypes = {"application/xml", "text/xml", MIME_JSON};
         protected String acceptedMimeType = MIME_JSON;

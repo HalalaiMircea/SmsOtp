@@ -3,6 +3,8 @@ package com.example.smsotp.server;
 import android.content.Context;
 
 import com.example.smsotp.server.handlers.ApiHandler;
+import com.example.smsotp.server.handlers.DefaultHandler;
+import com.example.smsotp.server.handlers.IndexHandler;
 import com.example.smsotp.sql.AppDatabase;
 import com.google.gson.Gson;
 
@@ -10,9 +12,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import fi.iki.elonen.router.RouterNanoHTTPD;
-
-public class WebServer extends RouterNanoHTTPD {
+public class WebServer extends WebServerRouter {
     private static final String TAG = "SMSOTP_NanoHTTPD";
     public static Gson gson = new Gson();
     public static AppDatabase database;
@@ -34,8 +34,8 @@ public class WebServer extends RouterNanoHTTPD {
 
     @Override
     public void addMappings() {
-        setNotFoundHandler(com.example.smsotp.server.handlers.DefaultHandler.class);
-        addRoute("/", com.example.smsotp.server.handlers.IndexHandler.class);
+        setNotFoundHandler(DefaultHandler.class, context);
+        addRoute("/", IndexHandler.class, context);
         addRoute("/api/sms", ApiHandler.class, context);
     }
 
