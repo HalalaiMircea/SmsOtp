@@ -12,9 +12,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class WebServer extends WebServerRouter {
+public class WebServer extends RoutedNanoHTTPD {
     private static final String TAG = "SMSOTP_NanoHTTPD";
-    public static Gson gson = new Gson();
     public static AppDatabase database;
 
     static {

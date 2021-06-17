@@ -25,6 +25,7 @@ public class WebService extends Service {
     public static SmsManager smsManager;
     private WebServer webServer;
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate() {
         startForeground(1, createNotification());
@@ -36,7 +37,7 @@ public class WebService extends Service {
             smsManager = SmsManager.getSmsManagerForSubscriptionId(subId);
         } else smsManager = SmsManager.getDefault();
 
-        // Create and start the webServer on a background thread so we don't block the UI thread
+        // Start the server
         int port = Integer.parseInt(sharedPrefs.getString(KEY_PREF_PORT, "8080"));
         webServer = new WebServer(this, port);
         try {

@@ -3,7 +3,7 @@ package com.example.smsotp.server.handlers;
 import android.content.Context;
 
 import com.example.smsotp.server.ServerUtils;
-import com.example.smsotp.server.WebServerRouter.UriResource;
+import com.example.smsotp.server.RoutedNanoHTTPD.UriResource;
 
 import java.io.IOException;
 import java.io.InputStream;

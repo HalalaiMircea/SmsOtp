@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.*;
 import com.example.smsotp.databinding.FragmentUserListBinding;
 import com.example.smsotp.databinding.UserListItemBinding;
 import com.example.smsotp.sql.User;
+import com.example.smsotp.ui.MainFragmentDirections;
 import com.example.smsotp.ui.main.UserListViewModel.UserItem;
 
 public class UserListFragment extends Fragment {
@@ -87,7 +88,7 @@ public class UserListFragment extends Fragment {
         }
     }
 
-    private static class ViewHolder extends RecyclerView.ViewHolder {
+    static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private final UserListItemBinding binding;
         private int userId;
 
@@ -95,7 +96,7 @@ public class UserListFragment extends Fragment {
             super(binding.getRoot());
             this.binding = binding;
 
-            binding.getRoot().setOnClickListener(this::onClick);
+            binding.getRoot().setOnClickListener(this);
         }
 
         public void bind(UserItem item) {
@@ -103,7 +104,8 @@ public class UserListFragment extends Fragment {
             userId = item.getId();
         }
 
-        private void onClick(View v) {
+        @Override
+        public void onClick(View v) {
             if (getBindingAdapterPosition() != RecyclerView.NO_POSITION) {
                 NavDirections action = MainFragmentDirections.actionMainFragmentToUserFragment(userId);
                 Navigation.findNavController(v).navigate(action);

@@ -31,12 +31,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(ActivityMainBinding.inflate(getLayoutInflater()).getRoot());
-        // Preload the system WebView.
-        // WTF I only STUMBLED BY ACCIDENT on this solution to the inflation taking too long
-        WebView wv = new WebView(this);
+        new WebView(this);  // Preload the system WebView to avoid lagging later
 
         loadDefaultPreferencesOnFirstBoot();
 
+        //startServerOnDebugVariant();
+    }
+
+    private void startServerOnDebugVariant() {
         if (BuildConfig.DEBUG) {
             final String msg;
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS)

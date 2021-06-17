@@ -1,4 +1,4 @@
-package com.example.smsotp.ui.main;
+package com.example.smsotp.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,6 +17,9 @@ import com.example.smsotp.R;
 import com.example.smsotp.SettingsActivity;
 import com.example.smsotp.WebService;
 import com.example.smsotp.databinding.FragmentMainBinding;
+import com.example.smsotp.ui.main.StatusFragment;
+import com.example.smsotp.ui.main.UserListFragment;
+import com.example.smsotp.ui.main.WebAppFragment;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 public class MainFragment extends Fragment {

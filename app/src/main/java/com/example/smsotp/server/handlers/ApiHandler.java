@@ -10,13 +10,17 @@ import android.os.HandlerThread;
 import android.util.Log;
 
 import com.example.smsotp.WebService;
+import com.example.smsotp.server.RoutedNanoHTTPD.UriResource;
 import com.example.smsotp.server.ServerUtils;
-import com.example.smsotp.server.WebServerRouter.UriResource;
 import com.example.smsotp.server.dto.CommandDto;
 import com.example.smsotp.server.dto.SmsDto;
+import com.example.smsotp.server.dto.SmsRequest;
 import com.example.smsotp.server.dto.SmsResultType;
 import com.example.smsotp.sql.Command;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+
+import org.apache.commons.lang.StringUtils;
 
 import java.lang.reflect.Type;
 import java.util.*;
@@ -25,8 +29,8 @@ import java.util.stream.Collectors;
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
 
+import static com.example.smsotp.server.ServerUtils.validateParam;
 import static com.example.smsotp.server.WebServer.database;
-import static com.example.smsotp.server.WebServer.gson;
 
 public class ApiHandler extends ServerUtils.RestHandler {
     private static final String TAG = "Web_ApiHandler";
@@ -42,6 +46,7 @@ public class ApiHandler extends ServerUtils.RestHandler {
         List<CommandDto> commandsDto = database.commandDao().getAll().stream()
                 .map(cmd -> new CommandDto(cmd.id, cmd.userId, cmd.message,
                         gson.fromJson(cmd.phoneResults, resultListType), cmd.executedDate))
+                .sorted((c1, c2) -> c2.getExecutedDate().compareTo(c1.getExecutedDate()))
                 .collect(Collectors.toList());
 
         return Ok(commandsDto);
@@ -56,11 +61,31 @@ public class ApiHandler extends ServerUtils.RestHandler {
         Map<String, List<String>> params = session.getParameters();
         context = uriResource.initParameter(Context.class);
 
+        /*SmsRequest reqBody;
+        try {
+            if (MIME_JSON.equals(session.getHeaders().get("content-type"))) {
+                reqBody = gson.fromJson(validateParam(params.get("postData")).get(0), SmsRequest.class);
+                if (StringUtils.isBlank(reqBody.getUsername()) ||
+                    StringUtils.isBlank(reqBody.getPassword()) ||
+                    StringUtils.isBlank(reqBody.getMessage())) {
+                    throw new IllegalArgumentException("Null or blank values!");
+                }
+            } else {
+                reqBody = new SmsRequest(
+                        validateParam(params.get(Key.USERNAME)).get(0),
+                        validateParam(params.get(Key.PASSWORD)).get(0),
+                        params.get(Key.PHONES),
+                        validateParam(params.get(Key.MESSAGE)).get(0));
+            }
+        } catch (JsonSyntaxException | IllegalArgumentException jsEx) {
+            return BadRequest(session.getUri(), jsEx, jsEx.getMessage());
+        }*/
+
         final String usernameParam, passwordParam;
         try {
             // We check if the request misses any credential
-            usernameParam = ServerUtils.validateParam(params.get(Key.USERNAME)).get(0);
-            passwordParam = ServerUtils.validateParam(params.get(Key.PASSWORD)).get(0);
+            usernameParam = validateParam(params.get(Key.USERNAME)).get(0);
+            passwordParam = validateParam(params.get(Key.PASSWORD)).get(0);
             // If the returned password string is null, username doesn't exist
             String password = database.userDao().getPasswordByUsername(usernameParam);
             if (!Objects.equals(password, passwordParam))
@@ -70,7 +95,7 @@ public class ApiHandler extends ServerUtils.RestHandler {
         }
 
         try {
-            final String msg = ServerUtils.validateParam(params.get(Key.MESSAGE)).get(0);
+            final String msg = validateParam(params.get(Key.MESSAGE)).get(0);
             final List<String> phones = ServerUtils.validatePhones(params.get(Key.PHONES));
 
             int userId = database.userDao().getIdByUsername(usernameParam);

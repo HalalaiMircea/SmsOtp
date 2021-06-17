@@ -52,20 +52,20 @@ import fi.iki.elonen.NanoHTTPD.Response.Status;
  * @author MirceaHalalai
  */
 @SuppressWarnings("unused")
-public abstract class WebServerRouter extends NanoHTTPD {
+public abstract class RoutedNanoHTTPD extends NanoHTTPD {
 
     /**
      * logger to log to.
      */
-    private static final Logger LOG = Logger.getLogger(WebServerRouter.class.getName());
+    private static final Logger LOG = Logger.getLogger(RoutedNanoHTTPD.class.getName());
     private final UriRouter router;
 
-    public WebServerRouter(int port) {
+    public RoutedNanoHTTPD(int port) {
         super(port);
         router = new UriRouter();
     }
 
-    public WebServerRouter(String hostname, int port) {
+    public RoutedNanoHTTPD(String hostname, int port) {
         super(hostname, port);
         router = new UriRouter();
     }
@@ -145,7 +145,7 @@ public abstract class WebServerRouter extends NanoHTTPD {
     }
 
     /**
-     * General nanolet to inherit from if you provide stream data, only chucked
+     * General nanolet to inherit from if you provide stream data, only chunked
      * responses will be generated.
      */
     public static abstract class DefaultStreamHandler implements UriResponder {

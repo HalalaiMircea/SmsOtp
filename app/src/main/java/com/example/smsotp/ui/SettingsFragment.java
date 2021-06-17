@@ -73,8 +73,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             SubscriptionManager subManager = getSystemService(requireContext(), SubscriptionManager.class);
             assert subManager != null;
             List<SubscriptionInfo> subscriptionsInfo = subManager.getActiveSubscriptionInfoList();
-            int numSubs = 0;
-            if (subscriptionsInfo != null) numSubs = subscriptionsInfo.size();
+            final int numSubs = subscriptionsInfo != null ? subscriptionsInfo.size() : 0;
 
             CharSequence[] entries = new CharSequence[numSubs];
             CharSequence[] entryValues = new CharSequence[numSubs];
