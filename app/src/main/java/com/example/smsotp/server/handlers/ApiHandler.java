@@ -10,7 +10,7 @@ import android.os.HandlerThread;
 import android.util.Log;
 
 import com.example.smsotp.WebService;
-import com.example.smsotp.server.RoutedNanoHTTPD.UriResource;
+import com.example.smsotp.server.RoutedWebServer.UriResource;
 import com.example.smsotp.server.ServerUtils;
 import com.example.smsotp.server.dto.CommandDto;
 import com.example.smsotp.server.dto.SmsDto;
@@ -29,17 +29,16 @@ import java.util.stream.Collectors;
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
 
+import static com.example.smsotp.server.RoutedWebServer.database;
 import static com.example.smsotp.server.ServerUtils.validateParam;
-import static com.example.smsotp.server.WebServer.database;
+import static com.example.smsotp.server.ServerUtils.validatePhones;
 
 public class ApiHandler extends ServerUtils.RestHandler {
     private static final String TAG = "Web_ApiHandler";
     private Context context;
 
     @Override
-    public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        Response response = super.get(uriResource, urlParams, session);
-        if (response.getStatus() == Response.Status.NOT_ACCEPTABLE) return response;
+    public Response GET(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
 
         final Type resultListType = new TypeToken<List<SmsDto.Result>>() {
         }.getType();
@@ -53,61 +52,45 @@ public class ApiHandler extends ServerUtils.RestHandler {
     }
 
     @Override
-    public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        Response response = super.post(uriResource, urlParams, session);
-        // In case we don't support the mimetype requested by client, forward the response
-        if (response.getStatus() == Response.Status.NOT_ACCEPTABLE) return response;
-
+    public Response POST(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
         Map<String, List<String>> params = session.getParameters();
         context = uriResource.initParameter(Context.class);
 
-        /*SmsRequest reqBody;
+        SmsRequest reqBody;
+        // We first validate the request, then we authorize
         try {
             if (MIME_JSON.equals(session.getHeaders().get("content-type"))) {
-                reqBody = gson.fromJson(validateParam(params.get("postData")).get(0), SmsRequest.class);
+                reqBody = gson.fromJson(bodyFiles.get("postData"), SmsRequest.class);
                 if (StringUtils.isBlank(reqBody.getUsername()) ||
-                    StringUtils.isBlank(reqBody.getPassword()) ||
-                    StringUtils.isBlank(reqBody.getMessage())) {
+                        StringUtils.isBlank(reqBody.getPassword()) ||
+                        StringUtils.isBlank(reqBody.getMessage())) {
                     throw new IllegalArgumentException("Null or blank values!");
                 }
+                validatePhones(reqBody.getPhones());
             } else {
                 reqBody = new SmsRequest(
                         validateParam(params.get(Key.USERNAME)).get(0),
                         validateParam(params.get(Key.PASSWORD)).get(0),
-                        params.get(Key.PHONES),
+                        validatePhones(params.get(Key.PHONES)),
                         validateParam(params.get(Key.MESSAGE)).get(0));
             }
         } catch (JsonSyntaxException | IllegalArgumentException jsEx) {
             return BadRequest(session.getUri(), jsEx, jsEx.getMessage());
-        }*/
-
-        final String usernameParam, passwordParam;
-        try {
-            // We check if the request misses any credential
-            usernameParam = validateParam(params.get(Key.USERNAME)).get(0);
-            passwordParam = validateParam(params.get(Key.PASSWORD)).get(0);
-            // If the returned password string is null, username doesn't exist
-            String password = database.userDao().getPasswordByUsername(usernameParam);
-            if (!Objects.equals(password, passwordParam))
-                return Unauthorized(session.getUri(), null, "Incorrect username and/or password!");
-        } catch (IllegalArgumentException e) {
-            return Unauthorized(session.getUri(), e, "Missing username or password parameters!");
         }
 
-        try {
-            final String msg = validateParam(params.get(Key.MESSAGE)).get(0);
-            final List<String> phones = ServerUtils.validatePhones(params.get(Key.PHONES));
+        // If the returned password string is null, username doesn't exist
+        String password = database.userDao().getPasswordByUsername(reqBody.getUsername());
+        if (!Objects.equals(password, reqBody.getPassword()))
+            return Unauthorized(session.getUri(), null, "Incorrect username and/or password!");
 
-            int userId = database.userDao().getIdByUsername(usernameParam);
-            List<SmsDto.Result> reportResults = sendManySms(phones, msg);
-            Command command = new Command(userId, msg, gson.toJson(reportResults), new Date());
-            int commId = (int) database.commandDao().insert(command);
-            SmsDto reportDto = new SmsDto(commId, userId, msg, reportResults);
+        int userId = database.userDao().getIdByUsername(reqBody.getUsername());
+        List<SmsDto.Result> reportResults = sendManySms(reqBody.getPhones(), reqBody.getMessage());
+        Command command = new Command(userId, reqBody.getMessage(), gson.toJson(reportResults), new Date());
+        int commId = (int) database.commandDao().insert(command);
+        SmsDto reportDto = new SmsDto(commId, userId, reqBody.getMessage(), reportResults);
 
-            return Ok(reportDto);
-        } catch (IllegalArgumentException e) {
-            return BadRequest(session.getUri(), e, "Missing or invalid message or phones parameters!");
-        }
+        return Ok(reportDto);
+
     }
 
     /**

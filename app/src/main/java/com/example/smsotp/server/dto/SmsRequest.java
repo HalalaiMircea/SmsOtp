@@ -1,7 +1,5 @@
 package com.example.smsotp.server.dto;
 
-import com.example.smsotp.server.ServerUtils;
-
 import java.util.List;
 
 public class SmsRequest {
@@ -13,7 +11,7 @@ public class SmsRequest {
             throws IllegalArgumentException {
         this.username = username;
         this.password = password;
-        this.phones = ServerUtils.validatePhones(phones);
+        this.phones = phones;
         this.message = message;
     }
 

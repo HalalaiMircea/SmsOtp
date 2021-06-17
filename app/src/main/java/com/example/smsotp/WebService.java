@@ -12,7 +12,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.MutableLiveData;
 import androidx.preference.PreferenceManager;
 
-import com.example.smsotp.server.WebServer;
+import com.example.smsotp.server.RoutedWebServer;
 
 import java.io.IOException;
 
@@ -23,7 +23,7 @@ public class WebService extends Service {
     private static final String TAG = "SMSOTP_WebService";
     public static MutableLiveData<Boolean> isRunning = new MutableLiveData<>(false);
     public static SmsManager smsManager;
-    private WebServer webServer;
+    private RoutedWebServer webServer;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -39,7 +39,7 @@ public class WebService extends Service {
 
         // Start the server
         int port = Integer.parseInt(sharedPrefs.getString(KEY_PREF_PORT, "8080"));
-        webServer = new WebServer(this, port);
+        webServer = new RoutedWebServer(this, port);
         try {
             webServer.start();
             isRunning.setValue(true);

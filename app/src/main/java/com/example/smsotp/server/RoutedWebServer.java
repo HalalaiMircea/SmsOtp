@@ -33,10 +33,16 @@ package com.example.smsotp.server;
  * #L%
  */
 
+import android.content.Context;
+import android.util.Log;
+
+import com.example.smsotp.server.handlers.ApiHandler;
+import com.example.smsotp.server.handlers.DefaultHandler;
+import com.example.smsotp.server.handlers.IndexHandler;
+import com.example.smsotp.sql.AppDatabase;
+
 import java.io.InputStream;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,29 +51,30 @@ import fi.iki.elonen.NanoHTTPD.Response.IStatus;
 import fi.iki.elonen.NanoHTTPD.Response.Status;
 
 /**
- * Modified from NanoHttpd artifact for SmsOTP project
+ * Modified from RouterNanoHttpd artifact for SmsOTP project
  *
  * @author vnnv
  * @author ritchieGitHub
  * @author MirceaHalalai
  */
-@SuppressWarnings("unused")
-public abstract class RoutedNanoHTTPD extends NanoHTTPD {
 
-    /**
-     * logger to log to.
-     */
-    private static final Logger LOG = Logger.getLogger(RoutedNanoHTTPD.class.getName());
-    private final UriRouter router;
+public class RoutedWebServer extends NanoHTTPD {
+    private static final String TAG = "SMSOTP_NanoHTTPD";
+    public static AppDatabase database;
 
-    public RoutedNanoHTTPD(int port) {
-        super(port);
-        router = new UriRouter();
+    static {
+        mimeTypes().put("json", "application/json");
     }
 
-    public RoutedNanoHTTPD(String hostname, int port) {
-        super(hostname, port);
+    private final UriRouter router;
+    private final Context context;
+
+    public RoutedWebServer(Context context, int port) {
+        super(port);
+        this.context = context;
+        RoutedWebServer.database = AppDatabase.getInstance(context);
         router = new UriRouter();
+        addMappings();
     }
 
     public static String normalizeUri(String value) {
@@ -85,14 +92,13 @@ public abstract class RoutedNanoHTTPD extends NanoHTTPD {
     }
 
     /**
-     * default routes, they are over writable.
-     *
-     * <pre>
-     * router.setNotFoundHandler(GeneralHandler.class);
-     * </pre>
+     * Routes of the server.
      */
-
-    public abstract void addMappings();
+    public void addMappings() {
+        setNotFoundHandler(DefaultHandler.class, context);
+        addRoute("/", IndexHandler.class, context);
+        addRoute("/api/sms", ApiHandler.class, context);
+    }
 
     public void addRoute(String url, Class<?> handler, Object... initParameter) {
         router.addRoute(url, 100, handler, initParameter);
@@ -277,7 +283,7 @@ public abstract class RoutedNanoHTTPD extends NanoHTTPD {
                     }
                 } catch (Exception e) {
                     error = "Error: " + e.getClass().getName() + " : " + e.getMessage();
-                    LOG.log(Level.SEVERE, error, e);
+                    Log.e(TAG, error, e);
                 }
             }
             return NanoHTTPD.newFixedLengthResponse(Status.INTERNAL_ERROR, "text/plain", error);
@@ -303,7 +309,7 @@ public abstract class RoutedNanoHTTPD extends NanoHTTPD {
             if (initParameter.length > parameterIndex) {
                 return paramClazz.cast(initParameter[parameterIndex]);
             }
-            LOG.severe("init parameter index not available " + parameterIndex);
+            Log.e(TAG, "init parameter index not available " + parameterIndex);
             return null;
         }
 
