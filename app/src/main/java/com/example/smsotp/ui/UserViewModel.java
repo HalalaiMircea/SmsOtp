@@ -61,7 +61,7 @@ public class UserViewModel extends AndroidViewModel {
                 }
                 success.postValue(true);
             } catch (SQLiteConstraintException ex) {
-                Log.e(TAG, Objects.requireNonNull(ex.getMessage()));
+                Log.w(TAG, "addOrUpdateUser: ", ex);
                 success.postValue(false);
             }
         });

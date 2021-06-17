@@ -5,6 +5,7 @@ import android.content.*;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -86,7 +87,7 @@ public class StatusViewModel extends AndroidViewModel {
                 try {
                     ipAddress = InetAddress.getByAddress(ipByteArray).getHostAddress();
                 } catch (UnknownHostException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "onReceive: ", e);
                 }
             }
             wifiIpLiveData.setValue(ipAddress);

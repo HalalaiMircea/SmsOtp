@@ -11,7 +11,6 @@ import android.util.Log;
 
 import com.example.smsotp.WebService;
 import com.example.smsotp.server.RoutedWebServer.UriResource;
-import com.example.smsotp.server.ServerUtils;
 import com.example.smsotp.server.dto.CommandDto;
 import com.example.smsotp.server.dto.SmsDto;
 import com.example.smsotp.server.dto.SmsRequest;
@@ -33,13 +32,17 @@ import static com.example.smsotp.server.RoutedWebServer.database;
 import static com.example.smsotp.server.ServerUtils.validateParam;
 import static com.example.smsotp.server.ServerUtils.validatePhones;
 
-public class ApiHandler extends ServerUtils.RestHandler {
+public class ApiHandler extends RestHandler {
     private static final String TAG = "Web_ApiHandler";
-    private Context context;
+    private final Context mContext;
+
+    public ApiHandler(UriResource uriResource, Map<String, String> pathParams, IHTTPSession session) {
+        super(uriResource, pathParams, session);
+        mContext = uriResource.initParameter(Context.class);
+    }
 
     @Override
-    public Response GET(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-
+    public Response doGet() {
         final Type resultListType = new TypeToken<List<SmsDto.Result>>() {
         }.getType();
         List<CommandDto> commandsDto = database.commandDao().getAll().stream()
@@ -52,15 +55,12 @@ public class ApiHandler extends ServerUtils.RestHandler {
     }
 
     @Override
-    public Response POST(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        Map<String, List<String>> params = session.getParameters();
-        context = uriResource.initParameter(Context.class);
-
+    public Response doPost() {
         SmsRequest reqBody;
         // We first validate the request, then we authorize
         try {
             if (MIME_JSON.equals(session.getHeaders().get("content-type"))) {
-                reqBody = gson.fromJson(bodyFiles.get("postData"), SmsRequest.class);
+                reqBody = gson.fromJson(mBodyFiles.get("postData"), SmsRequest.class);
                 if (StringUtils.isBlank(reqBody.getUsername()) ||
                         StringUtils.isBlank(reqBody.getPassword()) ||
                         StringUtils.isBlank(reqBody.getMessage())) {
@@ -68,29 +68,30 @@ public class ApiHandler extends ServerUtils.RestHandler {
                 }
                 validatePhones(reqBody.getPhones());
             } else {
+                Map<String, List<String>> params = session.getParameters();
                 reqBody = new SmsRequest(
                         validateParam(params.get(Key.USERNAME)).get(0),
                         validateParam(params.get(Key.PASSWORD)).get(0),
                         validatePhones(params.get(Key.PHONES)),
                         validateParam(params.get(Key.MESSAGE)).get(0));
             }
-        } catch (JsonSyntaxException | IllegalArgumentException jsEx) {
-            return BadRequest(session.getUri(), jsEx, jsEx.getMessage());
+        } catch (JsonSyntaxException | IllegalArgumentException ex) {
+            return BadRequest(ex, ex.getMessage());
         }
 
         // If the returned password string is null, username doesn't exist
         String password = database.userDao().getPasswordByUsername(reqBody.getUsername());
         if (!Objects.equals(password, reqBody.getPassword()))
-            return Unauthorized(session.getUri(), null, "Incorrect username and/or password!");
+            return Unauthorized();
 
         int userId = database.userDao().getIdByUsername(reqBody.getUsername());
         List<SmsDto.Result> reportResults = sendManySms(reqBody.getPhones(), reqBody.getMessage());
-        Command command = new Command(userId, reqBody.getMessage(), gson.toJson(reportResults), new Date());
-        int commId = (int) database.commandDao().insert(command);
+        int commId = (int) database.commandDao().insert(
+                new Command(userId, reqBody.getMessage(), gson.toJson(reportResults), new Date())
+        );
         SmsDto reportDto = new SmsDto(commId, userId, reqBody.getMessage(), reportResults);
 
         return Ok(reportDto);
-
     }
 
     /**
@@ -109,7 +110,7 @@ public class ApiHandler extends ServerUtils.RestHandler {
         // We build our pendingIntents for the smsManager using a per-thread, per-phone unique action name
         for (int i = 0; i < phones.size(); i++) {
             String action = baseAction + i;
-            sentPIs[i] = PendingIntent.getBroadcast(context, 0, new Intent(action), 0);
+            sentPIs[i] = PendingIntent.getBroadcast(mContext, 0, new Intent(action), 0);
             filter.addAction(action);
         }
         SentSmsReceiver receiver = new SentSmsReceiver(myThread, phones.size());
@@ -117,7 +118,7 @@ public class ApiHandler extends ServerUtils.RestHandler {
         handlerThread.start();
 
         // Register it on the new thread, so we can sleep current thread and avoid doing a busy wait
-        context.registerReceiver(receiver, filter, null, new Handler(handlerThread.getLooper()));
+        mContext.registerReceiver(receiver, filter, null, new Handler(handlerThread.getLooper()));
         for (int i = 0; i < phones.size(); i++)
             WebService.smsManager.sendTextMessage(phones.get(i), null, msg, sentPIs[i], null);
 
@@ -128,7 +129,7 @@ public class ApiHandler extends ServerUtils.RestHandler {
             Log.d(TAG, "sendManySms: Interrupted " + myThread);
         }
         Log.d(TAG, "SENT_SMS Result: " + receiver.resultTypes);
-        context.unregisterReceiver(receiver);   // Prevent memory leak
+        mContext.unregisterReceiver(receiver);   // Prevent memory leak
 
         List<SmsDto.Result> results = new ArrayList<>(phones.size());
         for (int i = 0; i < phones.size(); i++) {

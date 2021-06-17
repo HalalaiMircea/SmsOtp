@@ -45,7 +45,7 @@ public class WebService extends Service {
             isRunning.setValue(true);
             Log.i(TAG, "Web Service started!");
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "onCreate: ", e);
         }
     }
 

@@ -1,8 +1,8 @@
 package com.example.smsotp.server.handlers;
 
 import android.content.Context;
+import android.util.Log;
 
-import com.example.smsotp.server.ServerUtils;
 import com.example.smsotp.server.RoutedWebServer.UriResource;
 
 import java.io.BufferedReader;
@@ -17,13 +17,17 @@ import fi.iki.elonen.NanoHTTPD.Response.Status;
 
 import static fi.iki.elonen.NanoHTTPD.*;
 
-public class DefaultHandler extends ServerUtils.HtmlHandler {
+public class DefaultHandler extends HtmlHandler {
     private static final String TAG = "Web_DefaultHandler";
-    private Context mContext;
+    private final Context mContext;
+
+    public DefaultHandler(UriResource uriResource, Map<String, String> pathParams, IHTTPSession session) {
+        super(uriResource, pathParams, session);
+        mContext = uriResource.initParameter(Context.class);
+    }
 
     @Override
-    public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        mContext = uriResource.initParameter(Context.class);
+    public Response doGet() {
         try {
             String fileName = "reactapp" + session.getUri();
             InputStream iStream = mContext.getAssets().open(fileName);
@@ -47,7 +51,7 @@ public class DefaultHandler extends ServerUtils.HtmlHandler {
 
             return newFixedLengthResponse(Status.NOT_FOUND, MIME_HTML, line);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "notFoundResponse: ", e);
             return newFixedLengthResponse(Status.NOT_FOUND, MIME_PLAINTEXT, e.getMessage());
         }
     }

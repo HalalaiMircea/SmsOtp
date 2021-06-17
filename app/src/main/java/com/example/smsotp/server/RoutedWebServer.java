@@ -36,18 +36,19 @@ package com.example.smsotp.server;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.example.smsotp.server.handlers.ApiHandler;
 import com.example.smsotp.server.handlers.DefaultHandler;
 import com.example.smsotp.server.handlers.IndexHandler;
+import com.example.smsotp.server.handlers.RestHandler;
 import com.example.smsotp.sql.AppDatabase;
 
-import java.io.InputStream;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import fi.iki.elonen.NanoHTTPD;
-import fi.iki.elonen.NanoHTTPD.Response.IStatus;
 import fi.iki.elonen.NanoHTTPD.Response.Status;
 
 /**
@@ -57,7 +58,6 @@ import fi.iki.elonen.NanoHTTPD.Response.Status;
  * @author ritchieGitHub
  * @author MirceaHalalai
  */
-
 public class RoutedWebServer extends NanoHTTPD {
     private static final String TAG = "SMSOTP_NanoHTTPD";
     public static AppDatabase database;
@@ -66,21 +66,22 @@ public class RoutedWebServer extends NanoHTTPD {
         mimeTypes().put("json", "application/json");
     }
 
-    private final UriRouter router;
     private final Context context;
+    private final IRoutePrioritizer routePrioritizer;
+    private UriResource error404Url;
 
     public RoutedWebServer(Context context, int port) {
         super(port);
-        this.context = context;
         RoutedWebServer.database = AppDatabase.getInstance(context);
-        router = new UriRouter();
+        this.context = context;
+        this.routePrioritizer = new RoutePrioritizer(NotImplementedHandler.class);
+
         addMappings();
     }
 
     public static String normalizeUri(String value) {
-        if (value == null) {
-            return value;
-        }
+        if (value == null) return null;
+
         if (value.startsWith("/")) {
             value = value.substring(1);
         }
@@ -101,42 +102,42 @@ public class RoutedWebServer extends NanoHTTPD {
     }
 
     public void addRoute(String url, Class<?> handler, Object... initParameter) {
-        router.addRoute(url, 100, handler, initParameter);
+        routePrioritizer.addRoute(url, 100, handler, initParameter);
     }
 
     public <T extends UriResponder> void setNotImplementedHandler(Class<T> handler) {
-        router.setNotImplemented(handler);
+        routePrioritizer.setNotImplemented(handler);
     }
 
     public <T extends UriResponder> void setNotFoundHandler(Class<T> handler, Object... initParameter) {
-        router.setNotFoundHandler(handler, initParameter);
+        error404Url = new UriResource(null, 100, handler, initParameter);
     }
 
     public void removeRoute(String url) {
-        router.removeRoute(url);
+        routePrioritizer.removeRoute(url);
     }
 
-    public void setRoutePrioritizer(IRoutePrioritizer routePrioritizer) {
-        router.setRoutePrioritizer(routePrioritizer);
-    }
-
+    /**
+     * Search in the mappings if the given url matches some of the rules. If
+     * there are more than one marches returns the rule with less parameters
+     * e.g. mapping 1 = /user/:id mapping 2 = /user/help . If the incoming uri
+     * is www.example.com/user/help - mapping 2 is returned. If the incoming
+     * uri is www.example.com/user/3232 - mapping 1 is returned
+     */
     @Override
     public Response serve(IHTTPSession session) {
         // Try to find match
-        return router.process(session);
-    }
-
-    public interface UriResponder {
-
-        Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session);
-
-        Response put(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session);
-
-        Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session);
-
-        Response delete(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session);
-
-        Response other(String method, UriResource uriResource, Map<String, String> urlParams, IHTTPSession session);
+        String work = normalizeUri(session.getUri());
+        Map<String, String> params = null;
+        UriResource uriResource = error404Url;
+        for (UriResource u : routePrioritizer.getPrioritizedRoutes()) {
+            params = u.match(work);
+            if (params != null) {
+                uriResource = u;
+                break;
+            }
+        }
+        return uriResource.process(params, session);
     }
 
     public interface IRoutePrioritizer {
@@ -150,58 +151,63 @@ public class RoutedWebServer extends NanoHTTPD {
         void setNotImplemented(Class<?> notImplemented);
     }
 
-    /**
-     * General nanolet to inherit from if you provide stream data, only chunked
-     * responses will be generated.
-     */
-    public static abstract class DefaultStreamHandler implements UriResponder {
+    public abstract static class UriResponder {
+        protected UriResource uriResource;
+        protected Map<String, String> pathParams;
+        protected IHTTPSession session;
 
-        public abstract String getMimeType();
-
-        public abstract IStatus getStatus();
-
-        public abstract InputStream getData();
-
-        public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return NanoHTTPD.newChunkedResponse(getStatus(), getMimeType(), getData());
+        public UriResponder(UriResource uriResource, Map<String, String> pathParams, IHTTPSession session) {
+            this.uriResource = uriResource;
+            this.pathParams = pathParams;
+            this.session = session;
         }
 
-        public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return get(uriResource, urlParams, session);
-        }
+        public abstract Response doGet();
 
-        public Response put(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return get(uriResource, urlParams, session);
-        }
+        public abstract Response doPut();
 
-        public Response delete(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return get(uriResource, urlParams, session);
-        }
+        public abstract Response doPost();
 
-        public Response other(String method, UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return get(uriResource, urlParams, session);
-        }
+        public abstract Response doDelete();
+
+        public abstract Response doOther(Method method);
     }
 
-    public static class NotImplementedHandler extends DefaultStreamHandler {
+    public static class NotImplementedHandler extends UriResponder {
 
-        public String getText() {
-            return "<html><body><h2>The uri is mapped in the router, but no handler is specified. <br> Status: Not implemented!</h3></body></html>";
+        public NotImplementedHandler(UriResource uriResource, Map<String, String> pathParams,
+                                     IHTTPSession session) {
+            super(uriResource, pathParams, session);
         }
 
         @Override
-        public String getMimeType() {
-            return "text/html";
+        public Response doGet() {
+            return getResponse();
         }
 
         @Override
-        public IStatus getStatus() {
-            return Status.OK;
+        public Response doPut() {
+            return getResponse();
         }
 
         @Override
-        public InputStream getData() {
-            throw new IllegalStateException("this method should not be called in a text based nanolet");
+        public Response doPost() {
+            return getResponse();
+        }
+
+        @Override
+        public Response doDelete() {
+            return getResponse();
+        }
+
+        @Override
+        public Response doOther(Method method) {
+            return getResponse();
+        }
+
+        private Response getResponse() {
+            return newFixedLengthResponse("<html><body><h2>The uri is mapped in the router," +
+                    " but no handler is specified.<br> Status: Not implemented!</h3></body></html>");
         }
     }
 
@@ -217,18 +223,18 @@ public class RoutedWebServer extends NanoHTTPD {
         private final String uri;
 
         private final Pattern uriPattern;
-        private final Class<?> handler;
+        @NonNull private final Class<?> handler;
         private final Object[] initParameter;
         private final List<String> uriParams = new ArrayList<>();
         private int priority;
 
-        public UriResource(String uri, int priority, Class<?> handler, Object... initParameter) {
+        public UriResource(String uri, int priority, @NonNull Class<?> handler, Object... initParameter) {
             this(uri, handler, initParameter);
             this.priority = priority + uriParams.size() * 1000;
         }
 
-        public UriResource(String uri, Class<?> handler, Object... initParameter) {
-            this.handler = handler;
+        public UriResource(String uri, @NonNull Class<?> handler, Object... initParameter) {
+            this.handler = Objects.requireNonNull(handler);
             this.initParameter = initParameter;
             if (uri != null) {
                 this.uri = normalizeUri(uri);
@@ -258,38 +264,44 @@ public class RoutedWebServer extends NanoHTTPD {
         }
 
         public Response process(Map<String, String> urlParams, IHTTPSession session) {
-            String error = "General error!";
-            if (handler != null) {
-                try {
-                    Object object = handler.newInstance();
-                    if (object instanceof UriResponder) {
-                        UriResponder responder = (UriResponder) object;
-                        switch (session.getMethod()) {
-                            case GET:
-                                return responder.get(this, urlParams, session);
-                            case POST:
-                                return responder.post(this, urlParams, session);
-                            case PUT:
-                                return responder.put(this, urlParams, session);
-                            case DELETE:
-                                return responder.delete(this, urlParams, session);
-                            default:
-                                return responder.other(session.getMethod().toString(), this, urlParams, session);
-                        }
-                    } else {
-                        return NanoHTTPD.newFixedLengthResponse(Status.OK, "text/plain",
-                                "Return: " + handler.getCanonicalName() + ".toString() -> " + object
-                        );
+            String error;
+            try {
+                if (UriResponder.class.isAssignableFrom(handler)) {
+                    UriResponder responder = (UriResponder) handler.getConstructor(
+                            UriResource.class, Map.class, IHTTPSession.class)
+                            .newInstance(this, urlParams, session);
+
+                    // Check if it's a RestHandler and call error checkup method
+                    if (RestHandler.class.isAssignableFrom(handler)) {
+                        final Response response = ((RestHandler) responder).checkErrors();
+                        if (response != null) return response;
                     }
-                } catch (Exception e) {
-                    error = "Error: " + e.getClass().getName() + " : " + e.getMessage();
-                    Log.e(TAG, error, e);
+                    switch (session.getMethod()) {
+                        case GET:
+                            return responder.doGet();
+                        case POST:
+                            return responder.doPost();
+                        case PUT:
+                            return responder.doPut();
+                        case DELETE:
+                            return responder.doDelete();
+                        default:
+                            return responder.doOther(session.getMethod());
+                    }
+                } else {
+                    Object object = handler.newInstance();
+                    return newFixedLengthResponse(Status.OK, "text/plain",
+                            "Return: " + handler.getCanonicalName() + ".toString() -> " + object
+                    );
                 }
+            } catch (Exception e) {
+                error = "Error: " + e.getClass().getName() + " : " + e.getMessage();
+                Log.e(TAG, error, e);
             }
-            return NanoHTTPD.newFixedLengthResponse(Status.INTERNAL_ERROR, "text/plain", error);
+            return newFixedLengthResponse(Status.INTERNAL_ERROR, "text/plain", error);
         }
 
-        @SuppressWarnings("NullableProblems")
+        @NonNull
         @Override
         public String toString() {
             return "UrlResource{uri='" + (uri == null ? "/" : uri) +
@@ -342,14 +354,12 @@ public class RoutedWebServer extends NanoHTTPD {
 
     }
 
-    public static abstract class BaseRoutePrioritizer implements IRoutePrioritizer {
+    public static class RoutePrioritizer implements IRoutePrioritizer {
+        protected final Collection<UriResource> mappings = new PriorityQueue<>();
+        protected @NonNull Class<?> notImplemented;
 
-        protected final Collection<UriResource> mappings;
-        protected Class<?> notImplemented;
-
-        public BaseRoutePrioritizer() {
-            this.mappings = newMappingCollection();
-            this.notImplemented = NotImplementedHandler.class;
+        public RoutePrioritizer(@NonNull Class<?> notImplemented) {
+            this.notImplemented = Objects.requireNonNull(notImplemented);
         }
 
         @Override
@@ -381,103 +391,9 @@ public class RoutedWebServer extends NanoHTTPD {
         }
 
         @Override
-        public void setNotImplemented(Class<?> handler) {
+        public void setNotImplemented(@NonNull Class<?> handler) {
             notImplemented = handler;
         }
-
-        protected abstract Collection<UriResource> newMappingCollection();
-    }
-
-    public static class ProvidedPriorityRoutePrioritizer extends BaseRoutePrioritizer {
-
-        @Override
-        public void addRoute(String url, int priority, Class<?> handler, Object... initParameter) {
-            if (url != null) {
-                UriResource resource;
-                if (handler != null) {
-                    resource = new UriResource(url, handler, initParameter);
-                } else {
-                    resource = new UriResource(url, handler, notImplemented);
-                }
-
-                resource.setPriority(priority);
-                mappings.add(resource);
-            }
-        }
-
-        @Override
-        protected Collection<UriResource> newMappingCollection() {
-            return new PriorityQueue<>();
-        }
-
-    }
-
-    public static class DefaultRoutePrioritizer extends BaseRoutePrioritizer {
-
-        protected Collection<UriResource> newMappingCollection() {
-            return new PriorityQueue<>();
-        }
-    }
-
-    public static class InsertionOrderRoutePrioritizer extends BaseRoutePrioritizer {
-
-        protected Collection<UriResource> newMappingCollection() {
-            return new ArrayList<>();
-        }
-    }
-
-    public static class UriRouter {
-
-        private UriResource error404Url;
-
-        private IRoutePrioritizer routePrioritizer;
-
-        public UriRouter() {
-            this.routePrioritizer = new DefaultRoutePrioritizer();
-        }
-
-        /**
-         * Search in the mappings if the given url matches some of the rules. If
-         * there are more than one marches returns the rule with less parameters
-         * e.g. mapping 1 = /user/:id mapping 2 = /user/help . If the incoming uri
-         * is www.example.com/user/help - mapping 2 is returned. If the incoming
-         * uri is www.example.com/user/3232 - mapping 1 is returned
-         */
-        public Response process(IHTTPSession session) {
-            String work = normalizeUri(session.getUri());
-            Map<String, String> params = null;
-            UriResource uriResource = error404Url;
-            for (UriResource u : routePrioritizer.getPrioritizedRoutes()) {
-                params = u.match(work);
-                if (params != null) {
-                    uriResource = u;
-                    break;
-                }
-            }
-            return uriResource.process(params, session);
-        }
-
-        @SuppressWarnings("SameParameterValue")
-        private void addRoute(String url, int priority, Class<?> handler, Object... initParameter) {
-            routePrioritizer.addRoute(url, priority, handler, initParameter);
-        }
-
-        private void removeRoute(String url) {
-            routePrioritizer.removeRoute(url);
-        }
-
-        public void setNotFoundHandler(Class<?> handler, Object... initParameter) {
-            error404Url = new UriResource(null, 100, handler, initParameter);
-        }
-
-        public void setNotImplemented(Class<?> handler) {
-            routePrioritizer.setNotImplemented(handler);
-        }
-
-        public void setRoutePrioritizer(IRoutePrioritizer routePrioritizer) {
-            this.routePrioritizer = routePrioritizer;
-        }
-
     }
 }
 

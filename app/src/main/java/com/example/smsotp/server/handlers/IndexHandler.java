@@ -1,8 +1,8 @@
 package com.example.smsotp.server.handlers;
 
 import android.content.Context;
+import android.util.Log;
 
-import com.example.smsotp.server.ServerUtils;
 import com.example.smsotp.server.RoutedWebServer.UriResource;
 
 import java.io.IOException;
@@ -17,11 +17,15 @@ import static fi.iki.elonen.NanoHTTPD.MIME_PLAINTEXT;
 import static fi.iki.elonen.NanoHTTPD.newChunkedResponse;
 import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 
-public class IndexHandler extends ServerUtils.HtmlHandler {
+public class IndexHandler extends HtmlHandler {
     private static final String TAG = "Web_IndexHandler";
 
+    public IndexHandler(UriResource uriResource, Map<String, String> pathParams, IHTTPSession session) {
+        super(uriResource, pathParams, session);
+    }
+
     @Override
-    public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
+    public Response doGet() {
         Context context = uriResource.initParameter(Context.class);
         try {
             String uri = "reactapp/index.html";
@@ -29,7 +33,7 @@ public class IndexHandler extends ServerUtils.HtmlHandler {
 
             return newChunkedResponse(Response.Status.OK, MIME_HTML, inputStream);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "doGet: ", e);
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, e.getMessage());
         }
     }
