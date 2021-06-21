@@ -16,6 +16,7 @@ import com.example.smsotp.server.dto.SmsDto;
 import com.example.smsotp.server.dto.SmsRequest;
 import com.example.smsotp.server.dto.SmsResultType;
 import com.example.smsotp.sql.Command;
+import com.example.smsotp.sql.CommandDao;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -35,17 +36,24 @@ import static com.example.smsotp.server.ServerUtils.validatePhones;
 public class ApiHandler extends RestHandler {
     private static final String TAG = "Web_ApiHandler";
     private final Context mContext;
+    private final CommandDao mCommandDao;
 
     public ApiHandler(UriResource uriResource, Map<String, String> pathParams, IHTTPSession session) {
         super(uriResource, pathParams, session);
         mContext = uriResource.initParameter(Context.class);
+        mCommandDao = database.commandDao();
     }
 
     @Override
     public Response doGet() {
+        final List<String> userParam = session.getParameters().get("user");
+
+        List<Command> domainCommands = userParam != null ?
+                mCommandDao.getAllForUsername(userParam.get(0)) : mCommandDao.getAll();
+
         final Type resultListType = new TypeToken<List<SmsDto.Result>>() {
         }.getType();
-        List<CommandDto> commandsDto = database.commandDao().getAll().stream()
+        List<CommandDto> commandsDto = domainCommands.stream()
                 .map(cmd -> new CommandDto(cmd.id, cmd.userId, cmd.message,
                         gson.fromJson(cmd.phoneResults, resultListType), cmd.executedDate))
                 .sorted((c1, c2) -> c2.getExecutedDate().compareTo(c1.getExecutedDate()))
@@ -86,7 +94,7 @@ public class ApiHandler extends RestHandler {
 
         int userId = database.userDao().getIdByUsername(reqBody.getUsername());
         List<SmsDto.Result> reportResults = sendManySms(reqBody.getPhones(), reqBody.getMessage());
-        int commId = (int) database.commandDao().insert(
+        int commId = (int) mCommandDao.insert(
                 new Command(userId, reqBody.getMessage(), gson.toJson(reportResults), new Date())
         );
         SmsDto reportDto = new SmsDto(commId, userId, reqBody.getMessage(), reportResults);

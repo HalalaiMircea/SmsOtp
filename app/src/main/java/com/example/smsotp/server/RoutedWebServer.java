@@ -295,8 +295,8 @@ public class RoutedWebServer extends NanoHTTPD {
                     );
                 }
             } catch (Exception e) {
-                error = "Error: " + e.getClass().getName() + " : " + e.getMessage();
-                Log.e(TAG, error, e);
+                error = Log.getStackTraceString(e);
+                Log.e(TAG, "Error in UriResource: \n" + error);
             }
             return newFixedLengthResponse(Status.INTERNAL_ERROR, "text/plain", error);
         }
