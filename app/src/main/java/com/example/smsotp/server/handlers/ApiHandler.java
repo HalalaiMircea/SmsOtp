@@ -18,11 +18,9 @@ import com.example.smsotp.server.dto.SmsResultType;
 import com.example.smsotp.sql.Command;
 import com.example.smsotp.sql.CommandDao;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 
 import org.apache.commons.lang.StringUtils;
 
-import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,11 +49,9 @@ public class ApiHandler extends RestHandler {
         List<Command> domainCommands = userParam != null ?
                 mCommandDao.getAllForUsername(userParam.get(0)) : mCommandDao.getAll();
 
-        final Type resultListType = new TypeToken<List<SmsDto.Result>>() {
-        }.getType();
         List<CommandDto> commandsDto = domainCommands.stream()
-                .map(cmd -> new CommandDto(cmd.id, cmd.userId, cmd.message,
-                        gson.fromJson(cmd.phoneResults, resultListType), cmd.executedDate))
+                .map(cmd -> new CommandDto(cmd.id, cmd.userId, cmd.message, cmd.phoneResults,
+                        cmd.executedDate))
                 .sorted((c1, c2) -> c2.getExecutedDate().compareTo(c1.getExecutedDate()))
                 .collect(Collectors.toList());
 
@@ -95,7 +91,7 @@ public class ApiHandler extends RestHandler {
         int userId = database.userDao().getIdByUsername(reqBody.getUsername());
         List<SmsDto.Result> reportResults = sendManySms(reqBody.getPhones(), reqBody.getMessage());
         int commId = (int) mCommandDao.insert(
-                new Command(userId, reqBody.getMessage(), gson.toJson(reportResults), new Date())
+                new Command(userId, reqBody.getMessage(), reportResults, new Date())
         );
         SmsDto reportDto = new SmsDto(commId, userId, reqBody.getMessage(), reportResults);
 

@@ -7,6 +7,8 @@ import androidx.annotation.NonNull;
 import androidx.room.*;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
+import com.example.smsotp.BuildConfig;
+
 import java.util.Date;
 
 @Database(entities = {User.class, Command.class}, version = 1)
@@ -25,10 +27,11 @@ public abstract class AppDatabase extends RoomDatabase {
                     .addCallback(new Callback() {
                         @Override
                         public void onCreate(@NonNull SupportSQLiteDatabase db) {
-                            new Thread(() -> {
-                                instance.userDao().insert(new User("admin", "test"));
-                                Log.e(TAG, "Inserted test User record... Remove this before shipping app!");
-                            }).start();
+                            if (BuildConfig.DEBUG)
+                                new Thread(() -> {
+                                    instance.userDao().insert(new User("admin", "test"));
+                                    Log.e(TAG, "Inserted test User record... for debug convenience");
+                                }).start();
                         }
 
                         @Override

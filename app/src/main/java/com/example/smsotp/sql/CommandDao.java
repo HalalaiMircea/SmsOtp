@@ -22,7 +22,9 @@ public interface CommandDao {
     @Query("SELECT * FROM command")
     List<Command> getAll();
 
-    @Query("SELECT * FROM command JOIN user ON userId = user.id WHERE username = :username")
+    @Query("SELECT command.*" +
+            " FROM command JOIN user ON userId = user.id" +
+            " WHERE username = :username")
     List<Command> getAllForUsername(String username);
 
     @Query("SELECT COUNT(*) FROM command WHERE userId = :userId")

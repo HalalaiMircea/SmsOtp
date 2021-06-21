@@ -28,9 +28,9 @@ import static fi.iki.elonen.NanoHTTPD.MIME_PLAINTEXT;
 import static fi.iki.elonen.NanoHTTPD.newFixedLengthResponse;
 
 public abstract class RestHandler extends RoutedWebServer.UriResponder {
+    public static final Gson gson = new Gson();
     protected static final String MIME_JSON = "application/json";
     protected static final String[] supportedMimeTypes = {"application/xml", "text/xml", MIME_JSON};
-    protected static final Gson gson = new Gson();
     protected final Map<String, String> mBodyFiles = new HashMap<>();
     protected String acceptedMimeType;
 
