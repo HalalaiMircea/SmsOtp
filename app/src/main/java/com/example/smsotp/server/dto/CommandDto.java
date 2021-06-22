@@ -4,8 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 public class CommandDto {
-    private final int id;
-    private final int userId;
+    private final int id, userId;
     private final String message;
     private final List<SmsDto.Result> results;
     private final Date executedDate;

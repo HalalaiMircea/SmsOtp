@@ -48,8 +48,9 @@ public class UserFragment extends Fragment {
         toolbar.setNavigationOnClickListener(v -> findNavController(v).navigateUp());
 
         viewModel.getUser().observe(getViewLifecycleOwner(), user -> {
-            String text = getString(R.string.user_id) + ": " + user.id;
-            binding.idTextView.setText(text);
+            binding.idTextView.setText(getString(R.string.user_id, user.id));
+            final String textUsername = getString(R.string.username) + ": " + user.username;
+            binding.textUsername.setText(textUsername);
             toolbar.setTitle(user.username);
         });
         viewModel.getCommCount().observe(getViewLifecycleOwner(), count -> {

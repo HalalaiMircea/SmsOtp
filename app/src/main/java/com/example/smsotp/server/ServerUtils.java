@@ -48,14 +48,5 @@ public class ServerUtils {
                 exStacktrace = Log.getStackTraceString(exception);
             }
         }
-
-        /*public Map<String, Object> getMapModel() {
-            Map<String, Object> map = new HashMap<>();
-            map.put("status", status.getDescription().replaceFirst(" ", " - "));
-            map.put("uri", uri);
-            map.put("description", description != null ? description : status.getDescription());
-            map.put("exStacktrace", exStacktrace);
-            return map;
-        }*/
     }
 }

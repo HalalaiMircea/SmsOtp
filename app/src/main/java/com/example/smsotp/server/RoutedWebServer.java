@@ -221,9 +221,8 @@ public class RoutedWebServer extends NanoHTTPD {
         private static final Map<String, String> EMPTY = Collections.unmodifiableMap(new HashMap<>());
 
         private final String uri;
-
         private final Pattern uriPattern;
-        @NonNull private final Class<?> handler;
+        private final @NonNull Class<?> handler;
         private final Object[] initParameter;
         private final List<String> uriParams = new ArrayList<>();
         private int priority;
@@ -267,12 +266,12 @@ public class RoutedWebServer extends NanoHTTPD {
             String error;
             try {
                 if (UriResponder.class.isAssignableFrom(handler)) {
-                    UriResponder responder = (UriResponder) handler.getConstructor(
-                            UriResource.class, Map.class, IHTTPSession.class)
+                    UriResponder responder = (UriResponder) handler
+                            .getConstructor(UriResource.class, Map.class, IHTTPSession.class)
                             .newInstance(this, urlParams, session);
 
                     // Check if it's a RestHandler and call error checkup method
-                    if (RestHandler.class.isAssignableFrom(handler)) {
+                    if (responder instanceof RestHandler) {
                         final Response response = ((RestHandler) responder).checkErrors();
                         if (response != null) return response;
                     }

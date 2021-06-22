@@ -49,7 +49,7 @@ public abstract class RestHandler extends RoutedWebServer.UriResponder {
         acceptedMimeType = MIMEParse.bestMatch(Arrays.asList(supportedMimeTypes), acceptHeader);
         if (acceptedMimeType.isEmpty())
             return newFixedLengthResponse(Status.NOT_ACCEPTABLE, MIME_PLAINTEXT,
-                    "Only accepts " + Arrays.toString(supportedMimeTypes));
+                    "Supported Accept header values: " + Arrays.toString(supportedMimeTypes));
 
         // Then check NanoHTTPD boilerplate code for body
         NanoHTTPD.Method method = session.getMethod();

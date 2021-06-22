@@ -22,15 +22,10 @@ public class Command {
 
     @PrimaryKey(autoGenerate = true)
     public int id;
-
     public int userId;
-
     public String message;
-
     public List<SmsDto.Result> phoneResults; // Converted to Json Format
-
-    @NonNull
-    public Date executedDate;
+    public @NonNull Date executedDate;
 
     public Command(int userId, String message, List<SmsDto.Result> phoneResults,
                    @NonNull Date executedDate) {
