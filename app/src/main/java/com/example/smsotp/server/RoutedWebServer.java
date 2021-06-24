@@ -275,29 +275,32 @@ public class RoutedWebServer extends NanoHTTPD {
                         final Response response = ((RestHandler) responder).checkErrors();
                         if (response != null) return response;
                     }
-                    switch (session.getMethod()) {
-                        case GET:
-                            return responder.doGet();
-                        case POST:
-                            return responder.doPost();
-                        case PUT:
-                            return responder.doPut();
-                        case DELETE:
-                            return responder.doDelete();
-                        default:
-                            return responder.doOther(session.getMethod());
-                    }
+                    return matchRequestToMethod(responder, session);
                 } else {
                     Object object = handler.newInstance();
                     return newFixedLengthResponse(Status.OK, "text/plain",
-                            "Return: " + handler.getCanonicalName() + ".toString() -> " + object
-                    );
+                            "Return: " + handler.getCanonicalName() + ".toString() -> " + object);
                 }
             } catch (Exception e) {
                 error = Log.getStackTraceString(e);
                 Log.e(TAG, "Error in UriResource: \n" + error);
             }
             return newFixedLengthResponse(Status.INTERNAL_ERROR, "text/plain", error);
+        }
+
+        private Response matchRequestToMethod(UriResponder responder, IHTTPSession session) {
+            switch (session.getMethod()) {
+                case GET:
+                    return responder.doGet();
+                case POST:
+                    return responder.doPost();
+                case PUT:
+                    return responder.doPut();
+                case DELETE:
+                    return responder.doDelete();
+                default:
+                    return responder.doOther(session.getMethod());
+            }
         }
 
         @NonNull

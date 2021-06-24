@@ -1,4 +1,4 @@
-package com.example.smsotp.ui;
+package com.example.smsotp.ui.user;
 
 import android.os.Bundle;
 import android.view.*;

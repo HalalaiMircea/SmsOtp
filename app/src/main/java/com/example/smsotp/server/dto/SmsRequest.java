@@ -7,8 +7,7 @@ public class SmsRequest {
     private final List<String> phones;
     private final String message;
 
-    public SmsRequest(String username, String password, List<String> phones, String message)
-            throws IllegalArgumentException {
+    public SmsRequest(String username, String password, List<String> phones, String message) {
         this.username = username;
         this.password = password;
         this.phones = phones;

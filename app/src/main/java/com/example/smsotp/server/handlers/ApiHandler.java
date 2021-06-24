@@ -93,9 +93,8 @@ public class ApiHandler extends RestHandler {
         int commId = (int) mCommandDao.insert(
                 new Command(userId, reqBody.getMessage(), reportResults, new Date())
         );
-        SmsDto reportDto = new SmsDto(commId, userId, reqBody.getMessage(), reportResults);
 
-        return Ok(reportDto);
+        return Ok(new SmsDto(commId, userId, reqBody.getMessage(), reportResults));
     }
 
     /**

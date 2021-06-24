@@ -30,7 +30,7 @@
     </fragment>
     <fragment
         android:id="@+id/addUserFragment"
-        android:name="com.example.smsotp.ui.AddUserFragment"
+        android:name="com.example.smsotp.ui.user.AddUserFragment"
         android:label="fragment_add_user"
         tools:layout="@layout/fragment_add_user">
         <argument
@@ -39,7 +39,7 @@
     </fragment>
     <fragment
         android:id="@+id/userFragment"
-        android:name="com.example.smsotp.ui.UserFragment"
+        android:name="com.example.smsotp.ui.user.UserFragment"
         android:label="fragment_user"
         tools:layout="@layout/fragment_user">
         <argument
